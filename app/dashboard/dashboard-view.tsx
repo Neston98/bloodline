@@ -10,6 +10,7 @@ import { EmergencyContacts } from "@/components/feature/emergency-contacts"
 import { TravelHistory } from "@/components/feature/travel-history"
 import UserLayout from "@/components/layout/user-layout"
 import { Droplets, Award, Calendar, Heart } from "lucide-react"
+import { getDisplayTier } from "@/utils/formatters"
 import type { Profile, Appointment, BloodCentre, BloodInventory as BI, EmergencyContact, TravelRecord } from "@/types"
 
 export function DashboardView({
@@ -35,8 +36,11 @@ export function DashboardView({
   const pastAppointments = appointments.filter((a) => a.status === "completed" || a.status === "cancelled")
   const isCritical = filteredInventory.some((i) => i.blood_type === profile.blood_type && i.status === "critical")
 
-  function formatDate(date: string) {
-    return new Date(date).toLocaleDateString("en-SG", {
+  function formatDate(date: string | null | undefined) {
+    if (!date) return "Today"
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return "Today"
+    return d.toLocaleDateString("en-SG", {
       day: "numeric", month: "short", year: "numeric",
     })
   }
@@ -63,7 +67,7 @@ export function DashboardView({
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard label="Total Donations" value={String(profile.donations_count)} subtext="Lifetime" icon={<Droplets className="h-5 w-5" />} />
         <StatsCard label="Blood Type" value={profile.blood_type} subtext={isCritical ? "Critical demand" : "Stable supply"} icon={<Heart className="h-5 w-5" />} />
-        <StatsCard label="Reward Points" value={String(profile.points)} subtext={`${profile.tier} Tier`} icon={<Award className="h-5 w-5" />} />
+        <StatsCard label="Reward Points" value={String(profile.points)} subtext={`${getDisplayTier(profile)} Tier`} icon={<Award className="h-5 w-5" />} />
         <StatsCard label="Next Eligible" value={formatDate(profile.next_eligible)} subtext="Donation date" icon={<Calendar className="h-5 w-5" />} />
       </div>
 
@@ -110,8 +114,8 @@ export function DashboardView({
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <EmergencyContacts contacts={contacts} />
-        <TravelHistory records={travel} />
+        <EmergencyContacts contacts={contacts} donorId={profile.id} />
+        <TravelHistory records={travel} donorId={profile.id} />
       </div>
     </UserLayout>
   )

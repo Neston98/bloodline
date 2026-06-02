@@ -39,6 +39,7 @@ export interface Profile {
   last_hb_meta: string
   donations_count: number
   points: number
+  lifetime_points?: number
   tier: string
   next_eligible: string
   created_at: string

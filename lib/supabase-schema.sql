@@ -21,7 +21,8 @@ CREATE TABLE profiles (
   last_hb_meta TEXT,
   donations_count INTEGER DEFAULT 0,
   points INTEGER DEFAULT 0,
-  next_eligible TEXT DEFAULT 'Today',
+  lifetime_points INTEGER DEFAULT 0,
+  next_eligible DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMPTZ DEFAULT now(),
   role TEXT DEFAULT 'donor' CHECK (role IN ('donor', 'admin'))
 );
@@ -104,6 +105,10 @@ CREATE POLICY "Donors can view own appointments"
 CREATE POLICY "Donors can create appointments"
   ON appointments FOR INSERT
   WITH CHECK (auth.uid() = donor_id);
+
+CREATE POLICY "Donors can update own appointments"
+  ON appointments FOR UPDATE
+  USING (auth.uid() = donor_id);
 
 CREATE POLICY "Admins can view all appointments"
   ON appointments FOR SELECT
@@ -225,7 +230,21 @@ CREATE POLICY "Donors can view own redemptions"
   ON reward_redemptions FOR SELECT
   USING (auth.uid() = donor_id);
 
--- 13. Function to auto-create profile on signup
+CREATE POLICY "Donors can insert own redemptions"
+  ON reward_redemptions FOR INSERT
+  WITH CHECK (auth.uid() = donor_id);
+
+-- 14. Function to deduct points from donor balance
+CREATE OR REPLACE FUNCTION deduct_points(p_donor_id UUID, p_points INTEGER)
+RETURNS void AS $$
+BEGIN
+  UPDATE profiles
+  SET points = GREATEST(points - p_points, 0)
+  WHERE id = p_donor_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 15. Function to auto-create profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

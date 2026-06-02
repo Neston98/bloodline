@@ -105,7 +105,7 @@ SET
   weight_kg = 72,
   donations_count = 12,
   points = 2400,
-  next_eligible = 'Today'
+  next_eligible = CURRENT_DATE
 WHERE id = (SELECT id FROM auth.users WHERE email = 'donor@test.com' LIMIT 1);
 ```
 

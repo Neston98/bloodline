@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import UserLayout from "@/components/layout/user-layout"
 import { AppointmentCard } from "@/components/feature/appointment-card"
-import { Calendar, CheckCircle2 } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 import type { Profile, Appointment, BloodCentre } from "@/types"
 
 const TIME_SLOTS = ["09:00–10:00", "10:00–11:00", "11:00–12:00", "13:00–14:00", "14:00–15:00", "15:00–16:00", "16:00–17:00"]
@@ -42,6 +42,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
     const { error } = await supabase.from("appointments").insert({
       donor_id: profile.id,
       centre_id: selectedCentre,
+      centre_name: centre.name,
       appointment_date: selectedDate,
       time_start: start,
       time_end: end,
@@ -60,17 +61,9 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
 
   return (
     <UserLayout currentPath="/appointments" profile={profile}>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-black">Appointments</h1>
-          <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
-        </div>
-        <a href="/appointments/new">
-          <Button>
-            <Calendar className="mr-2 h-4 w-4" />
-            Schedule New Appointment
-          </Button>
-        </a>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-black">Appointments</h1>
+        <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
       </div>
 
       <Card className="mb-8">
@@ -84,7 +77,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
               <select
                 value={selectedCentre}
                 onChange={(e) => setSelectedCentre(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               >
                 <option value="" className="text-black">Select a centre</option>
                 {centres.map((c) => (
@@ -98,7 +91,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
             </div>
             <div>
@@ -106,7 +99,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
               <select
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               >
                 <option value="" className="text-black">Select time</option>
                 {TIME_SLOTS.map((slot) => (

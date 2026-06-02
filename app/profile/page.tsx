@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { EmergencyContacts } from "@/components/feature/emergency-contacts"
+import { getTierColor, getTierBg, getDisplayTier } from "@/utils/formatters"
 import UserLayout from "@/components/layout/user-layout"
 import {
   ShieldCheck, Phone, Mail, MapPin, Weight, Droplets, Award,
@@ -22,10 +22,11 @@ const MOCK_PROFILE: Profile = {
   email: "alex.tan@email.com",
   address: "123 Orchard Road, #12-34, Singapore 123456",
   weight_kg: 72,
-  last_hb: "14.5",
-  last_hb_meta: "g/dL on 15 Mar 2025",
+  last_hb: "14.8",
+  last_hb_meta: "g/dL on 28 May 2026",
   donations_count: 12,
   points: 2450,
+  lifetime_points: 2450,
   tier: "Gold",
   next_eligible: "2025-07-15",
   created_at: "2022-01-10",
@@ -60,6 +61,8 @@ export default async function ProfilePage() {
     return data as EmergencyContact[]
   }, MOCK_CONTACTS)
 
+  const displayTier = getDisplayTier(profile)
+
   return (
     <UserLayout currentPath="/profile" profile={profile}>
       <div className="mb-6">
@@ -68,7 +71,7 @@ export default async function ProfilePage() {
       </div>
 
       <div className="mb-6 overflow-hidden rounded-xl border bg-white shadow-sm">
-        <div className="bg-gradient-to-r from-red-500 to-red-600 p-6">
+        <div className="p-6" style={{ background: "linear-gradient(to right, #991b1b, #7f1d1d)" }}>
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white">
               {profile.initials}
@@ -79,9 +82,6 @@ export default async function ProfilePage() {
               <div className="mt-2 flex items-center gap-2">
                 <Badge variant="default" className="bg-white text-red-700">
                   {profile.blood_type}
-                </Badge>
-                <Badge variant="success" className="bg-green-200 text-green-800">
-                  Active
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-white/80">
                   <ShieldCheck className="h-3.5 w-3.5" />
@@ -159,7 +159,7 @@ export default async function ProfilePage() {
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
               <span className="text-sm text-gray-600">Next Eligible</span>
-              <span className="text-sm font-semibold text-black">{profile.next_eligible}</span>
+              <span className="text-sm font-semibold text-black">{formatDate(profile.next_eligible)}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
               <span className="text-sm text-gray-600">Points</span>
@@ -167,7 +167,7 @@ export default async function ProfilePage() {
             </div>
             <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
               <span className="text-sm text-gray-600">Current Tier</span>
-              <Badge variant="success">{profile.tier}</Badge>
+              <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold" style={{ backgroundColor: getTierBg(displayTier), color: getTierColor(displayTier), border: `2px solid ${getTierColor(displayTier)}` }}>{displayTier}</span>
             </div>
             <a
               href="/rewards"
@@ -180,18 +180,18 @@ export default async function ProfilePage() {
         </Card>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-black">Emergency Contacts</h2>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline">Edit</Button>
-          <Button size="sm" variant="destructive">Delete</Button>
-          <Button size="sm">Add New</Button>
-        </div>
-      </div>
-
-      <EmergencyContacts contacts={contacts} />
+      <EmergencyContacts contacts={contacts} donorId={profile.id} />
     </UserLayout>
   )
+}
+
+function formatDate(date: string | null | undefined) {
+  if (!date) return "Today"
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return "Today"
+  return d.toLocaleDateString("en-SG", {
+    day: "numeric", month: "short", year: "numeric",
+  })
 }
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

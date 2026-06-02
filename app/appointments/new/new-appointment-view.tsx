@@ -38,6 +38,7 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
     const { error } = await supabase.from("appointments").insert({
       donor_id: profile.id,
       centre_id: selectedCentre,
+      centre_name: centre?.name,
       appointment_date: selectedDate,
       time_start: start,
       time_end: end,
