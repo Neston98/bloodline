@@ -7,9 +7,18 @@ import { Button } from "@/components/ui/button"
 import UserLayout from "@/components/layout/user-layout"
 import { AppointmentCard } from "@/components/feature/appointment-card"
 import { CheckCircle2 } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Profile, Appointment, BloodCentre } from "@/types"
 
-const TIME_SLOTS = ["09:00–10:00", "10:00–11:00", "11:00–12:00", "13:00–14:00", "14:00–15:00", "15:00–16:00", "16:00–17:00"]
+const TIME_SLOTS = [
+  "09:00–09:20", "09:20–09:40", "09:40–10:00",
+  "10:00–10:20", "10:20–10:40", "10:40–11:00",
+  "11:00–11:20", "11:20–11:40", "11:40–12:00",
+  "13:00–13:20", "13:20–13:40", "13:40–14:00",
+  "14:00–14:20", "14:20–14:40", "14:40–15:00",
+  "15:00–15:20", "15:20–15:40", "15:40–16:00",
+  "16:00–16:20", "16:20–16:40", "16:40–17:00",
+]
 
 export function AppointmentsView({ profile, appointments: initialAppts, centres }: { profile: Profile; appointments: Appointment[]; centres: BloodCentre[] }) {
   const [selectedCentre, setSelectedCentre] = useState("")
@@ -20,9 +29,15 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
 
   const upcoming = appointments.filter((a) => a.status === "scheduled" || a.status === "fast_pass")
   const past = appointments.filter((a) => a.status === "completed" || a.status === "cancelled")
+  const isDeferred = !!(
+    selectedDate &&
+    profile.next_eligible &&
+    selectedDate < profile.next_eligible
+  )
 
   const handleBook = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
+    if (isDeferred) return
     const centre = centres.find((c) => c.id === selectedCentre)!
     const [start, end] = selectedTime.split("–")
     const newAppt: Appointment = {
@@ -87,12 +102,19 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-900">Date</label>
-              <input
-                type="date"
+              <DatePicker
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                onChange={setSelectedDate}
+                minDate={profile.next_eligible}
+                direction="down"
+                placeholder="Select donation date"
+                inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
+              {isDeferred && (
+                <p className="mt-1 text-xs text-red-600">
+                  You are deferred from donating until {profile.next_eligible}. Please select a date on or after this date.
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-900">Time Slot</label>
@@ -109,7 +131,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
             </div>
           </div>
           <div className="mt-4 flex items-center gap-4">
-            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime}>
+            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred}>
               Confirm Booking
             </Button>
             {showSuccess && (

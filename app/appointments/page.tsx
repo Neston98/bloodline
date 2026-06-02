@@ -7,16 +7,20 @@ const MOCK_PROFILE: Profile = {
   blood_type: "O+", date_of_birth: "1990-05-15", age: 35, mobile: "+65 9123 4567",
   email: "alex.tan@email.com", address: "123 Orchard Road, #12-34, Singapore 123456",
   weight_kg: 72,   last_hb: "14.8", last_hb_meta: "g/dL on 28 May 2026",
-  donations_count: 12, points: 2450, lifetime_points: 2450, tier: "Gold", next_eligible: "2025-07-15",
+  donations_count: 12, points: 2450, lifetime_points: 2450, tier: "Gold", next_eligible: "2026-06-15",
   created_at: "2022-01-10",
 }
 
 const MOCK_APPOINTMENTS: Appointment[] = [
-  { id: "apt-1", donor_id: "donor-1", centre_id: "centre-1", centre_name: "Singapore General Hospital Blood Bank", appointment_date: "2025-06-20", time_start: "09:00", time_end: "10:00", blood_type: "O+", status: "scheduled", created_at: "2025-05-01" },
-  { id: "apt-4", donor_id: "donor-1", centre_id: "centre-1", centre_name: "Singapore General Hospital Blood Bank", appointment_date: "2025-06-25", time_start: "11:00", time_end: "12:00", blood_type: "O+", status: "fast_pass", created_at: "2025-05-15" },
-  { id: "apt-2", donor_id: "donor-1", centre_id: "centre-2", centre_name: "Health Sciences Authority", appointment_date: "2025-03-15", time_start: "14:00", time_end: "15:00", blood_type: "O+", status: "completed", created_at: "2025-02-20" },
-  { id: "apt-3", donor_id: "donor-1", centre_id: "centre-3", centre_name: "National University Hospital Blood Bank", appointment_date: "2024-12-10", time_start: "10:00", time_end: "11:00", blood_type: "O+", status: "completed", created_at: "2024-11-25" },
-  { id: "apt-5", donor_id: "donor-1", centre_id: "centre-2", centre_name: "Health Sciences Authority", appointment_date: "2024-09-05", time_start: "09:00", time_end: "10:00", blood_type: "O+", status: "completed", created_at: "2024-08-15" },
+  { id: "apt-1", donor_id: "donor-1", centre_id: "centre-1", centre_name: "Singapore General Hospital Blood Bank", appointment_date: "2025-06-20", time_start: "09:00", time_end: "09:20", blood_type: "O+", status: "scheduled", created_at: "2025-05-01" },
+
+  { id: "apt-4", donor_id: "donor-1", centre_id: "centre-1", centre_name: "Singapore General Hospital Blood Bank", appointment_date: "2025-06-25", time_start: "11:00", time_end: "11:20", blood_type: "O+", status: "fast_pass", created_at: "2025-05-15" },
+
+  { id: "apt-2", donor_id: "donor-1", centre_id: "centre-2", centre_name: "Health Sciences Authority", appointment_date: "2025-03-15", time_start: "14:00", time_end: "14:20", blood_type: "O+", status: "completed", created_at: "2025-02-20" },
+
+  { id: "apt-3", donor_id: "donor-1", centre_id: "centre-3", centre_name: "National University Hospital Blood Bank", appointment_date: "2024-12-10", time_start: "10:00", time_end: "10:20", blood_type: "O+", status: "completed", created_at: "2024-11-25" },
+
+  { id: "apt-5", donor_id: "donor-1", centre_id: "centre-2", centre_name: "Health Sciences Authority", appointment_date: "2024-09-05", time_start: "09:00", time_end: "09:20", blood_type: "O+", status: "completed", created_at: "2024-08-15" },
 ]
 
 const MOCK_CENTRES: BloodCentre[] = [

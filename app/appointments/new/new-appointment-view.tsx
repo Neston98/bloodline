@@ -8,16 +8,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import UserLayout from "@/components/layout/user-layout"
 import { CheckCircle2, ArrowLeft, ArrowRight, Zap } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Profile, BloodCentre } from "@/types"
 
 const TIME_SLOTS = [
-  { label: "09:00–10:00", available: true },
-  { label: "10:00–11:00", available: true },
-  { label: "11:00–12:00", available: true },
-  { label: "13:00–14:00", available: false },
-  { label: "14:00–15:00", available: true },
-  { label: "15:00–16:00", available: true },
-  { label: "16:00–17:00", available: true },
+  { label: "09:00–09:20", available: true },
+  { label: "09:20–09:40", available: true },
+  { label: "09:40–10:00", available: true },
+  { label: "10:00–10:20", available: true },
+  { label: "10:20–10:40", available: true },
+  { label: "10:40–11:00", available: true },
+  { label: "11:00–11:20", available: true },
+  { label: "11:20–11:40", available: true },
+  { label: "11:40–12:00", available: true },
+  { label: "13:00–13:20", available: true },
+  { label: "13:20–13:40", available: true },
+  { label: "13:40–14:00", available: true },
+  { label: "14:00–14:20", available: true },
+  { label: "14:20–14:40", available: true },
+  { label: "14:40–15:00", available: true },
+  { label: "15:00–15:20", available: true },
+  { label: "15:20–15:40", available: true },
+  { label: "15:40–16:00", available: true },
+  { label: "16:00–16:20", available: true },
+  { label: "16:20–16:40", available: true },
+  { label: "16:40–17:00", available: true },
 ]
 
 export function NewAppointmentView({ profile, centres }: { profile: Profile; centres: BloodCentre[] }) {
@@ -30,9 +45,15 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
 
   const centre = centres.find((c) => c.id === selectedCentre)
   const canGoNext2 = selectedCentre && selectedDate
+  const isDeferred = !!(
+    selectedDate &&
+    profile.next_eligible &&
+    selectedDate < profile.next_eligible
+  )
 
   const handleConfirm = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
+    if (isDeferred) return
     const supabase = createClient()
     const [start, end] = selectedTime.split("–")
     const { error } = await supabase.from("appointments").insert({
@@ -131,12 +152,19 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
               <div className="space-y-6">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-900">Date</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    onChange={setSelectedDate}
+                    minDate={profile.next_eligible}
+                    direction="down"
+                    placeholder="Select donation date"
+                    inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                   />
+                  {isDeferred && (
+                    <p className="mt-1 text-xs text-red-600">
+                      You are deferred from donating until {profile.next_eligible}. Please select a date on or after this date.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900">Available Time Slots</label>
@@ -173,7 +201,7 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
-                  <Button onClick={() => setStep(3)} disabled={!canGoNext2}>
+                  <Button onClick={() => setStep(3)} disabled={!canGoNext2 || isDeferred}>
                     Next
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

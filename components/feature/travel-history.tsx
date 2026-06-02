@@ -7,6 +7,7 @@ import { ShieldCheck, ShieldAlert, Plus, Pencil, Trash2, X, Check } from "lucide
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { formatDate } from "@/utils/formatters"
 import type { TravelRecord } from "@/types"
 
@@ -264,95 +265,6 @@ function clearanceNote(country: string, returnDate: string): string {
   return `${days}-day deferral until ${d.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}`
 }
 
-function DatePicker({ value, onChange, inputCls }: { value: string; onChange: (v: string) => void; inputCls: string }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
-  const [cellPx, setCellPx] = useState(48)
-
-  const selected = value ? new Date(value + "T12:00:00") : null
-  const [viewYear, setViewYear] = useState(new Date().getFullYear())
-  const [viewMonth, setViewMonth] = useState(new Date().getMonth())
-
-  useEffect(() => {
-    if (!open) return
-    const el = gridRef.current
-    if (!el) return
-    const w = el.offsetWidth
-    const gapTotal = 6
-    setCellPx(Math.floor((w - gapTotal) / 7))
-  }, [open])
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
-
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
-  const firstDay = new Date(viewYear, viewMonth, 1).getDay()
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-
-  function pick(day: number) {
-    onChange(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`)
-    setOpen(false)
-  }
-
-  function display(value: string) {
-    if (!value) return ""
-    const d = new Date(value + "T12:00:00")
-    return d.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <input
-        readOnly
-        value={display(value)}
-        placeholder="Return date"
-        onClick={() => setOpen(!open)}
-        className={inputCls}
-      />
-      {open && (
-        <div style={{ position: "absolute", bottom: "100%", left: 0, zIndex: 50, marginBottom: "8px" }} className="w-96 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-          <div className="mb-2 flex items-center justify-between px-1">
-            <button type="button" onClick={() => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">◀</button>
-            <span className="text-sm font-semibold text-black">{months[viewMonth]} {viewYear}</span>
-            <button type="button" onClick={() => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">▶</button>
-          </div>
-          <div className="flex mb-1">
-            {days.map(d => (
-              <div key={d} style={{ width: cellPx, textAlign: "center" }} className="text-xs font-semibold text-gray-500">{d}</div>
-            ))}
-          </div>
-          <div ref={gridRef} style={{ display: "flex", flexWrap: "wrap", gap: "1px" }}>
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`e-${i}`} style={{ width: cellPx, height: cellPx, backgroundColor: "#fff" }} />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1
-              const isSel = selected && selected.getDate() === day && selected.getMonth() === viewMonth && selected.getFullYear() === viewYear
-              const isToday = new Date().getDate() === day && new Date().getMonth() === viewMonth && new Date().getFullYear() === viewYear
-              return (
-                <button key={day} type="button" onClick={() => pick(day)}
-                  style={{ width: cellPx, height: cellPx, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "none", cursor: "pointer", transition: "background 0.15s", backgroundColor: isSel ? "#dc2626" : isToday ? "#fef2f2" : "#fff", color: isSel ? "#fff" : isToday ? "#dc2626" : "#000", fontWeight: isSel || isToday ? "600" : "400" }}
-                  onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.backgroundColor = "#fef2f2" }}
-                  onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.backgroundColor = isToday ? "#fef2f2" : "#fff" }}>
-                  {day}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 export function TravelHistory({ records: initialRecords, donorId }: TravelHistoryProps) {
   const [records, setRecords] = useState(initialRecords.map((r) => ({

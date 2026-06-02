@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/utils/cn"
@@ -39,7 +38,6 @@ const statusDot: Record<InventoryStatus, string> = {
 }
 
 export default function AdminLoginPage() {
-  const router = useRouter()
   const supabase = createClient()
   const [centreId, setCentreId] = useState("")
   const [password, setPassword] = useState("")
@@ -69,8 +67,7 @@ export default function AdminLoginPage() {
       return
     }
 
-    router.push("/admin/dashboard")
-    router.refresh()
+    window.location.href = "/admin/dashboard"
   }
 
   return (

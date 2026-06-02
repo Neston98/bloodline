@@ -7,7 +7,7 @@ const MOCK_PROFILE: Profile = {
   blood_type: "O+", date_of_birth: "1990-05-15", age: 35, mobile: "+65 9123 4567",
   email: "alex.tan@email.com", address: "123 Orchard Road, #12-34, Singapore 123456",
   weight_kg: 72,   last_hb: "14.8", last_hb_meta: "g/dL on 28 May 2026",
-  donations_count: 12, points: 2450, lifetime_points: 2450, tier: "Gold", next_eligible: "2025-07-15",
+  donations_count: 12, points: 2450, lifetime_points: 2450, tier: "Gold", next_eligible: "2026-06-15",
   created_at: "2022-01-10",
 }
 
