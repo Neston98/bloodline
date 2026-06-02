@@ -16,36 +16,42 @@ interface TravelHistoryProps {
   donorId: string
 }
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  afghanistan: "🇦🇫", albania: "🇦🇱", algeria: "🇩🇿", angola: "🇦🇴", argentina: "🇦🇷",
-  australia: "🇦🇺", austria: "🇦🇹", bangladesh: "🇧🇩", belgium: "🇧🇪", bhutan: "🇧🇹",
-  bolivia: "🇧🇴", brazil: "🇧🇷", brunei: "🇧🇳", bulgaria: "🇧🇬", burkina: "🇧🇫",
-  myanmar: "🇲🇲", burma: "🇲🇲", cambodia: "🇰🇭", cameroon: "🇨🇲", canada: "🇨🇦",
-  chad: "🇹🇩", chile: "🇨🇱", china: "🇨🇳", colombia: "🇨🇴", congo: "🇨🇩",
-  "costa rica": "🇨🇷", croatia: "🇭🇷", cuba: "🇨🇺", "czech republic": "🇨🇿",
-  denmark: "🇩🇰", "dominican republic": "🇩🇴", ecuador: "🇪🇨", egypt: "🇪🇬",
-  "el salvador": "🇸🇻", ethiopia: "🇪🇹", fiji: "🇫🇯", finland: "🇫🇮", france: "🇫🇷",
-  gabon: "🇬🇦", germany: "🇩🇪", ghana: "🇬🇭", greece: "🇬🇷", guatemala: "🇬🇹",
-  guyana: "🇬🇾", haiti: "🇭🇹", honduras: "🇭🇳", "hong kong": "🇭🇰", hungary: "🇭🇺",
-  iceland: "🇮🇸", india: "🇮🇳", indonesia: "🇮🇩", iran: "🇮🇷", iraq: "🇮🇶",
-  ireland: "🇮🇪", israel: "🇮🇱", italy: "🇮🇹", jamaica: "🇯🇲", japan: "🇯🇵",
-  jordan: "🇯🇴", kazakhstan: "🇰🇿", kenya: "🇰🇪", kuwait: "🇰🇼", laos: "🇱🇦",
-  latvia: "🇱🇻", lebanon: "🇱🇧", libya: "🇱🇾", lithuania: "🇱🇹", luxembourg: "🇱🇺",
-  macau: "🇲🇴", malawi: "🇲🇼", malaysia: "🇲🇾", maldives: "🇲🇻", mali: "🇱🇲",
-  malta: "🇲🇹", mauritius: "🇲🇺", mexico: "🇲🇽", mongolia: "🇲🇳", montenegro: "🇲🇪",
-  morocco: "🇲🇦", mozambique: "🇲🇿", namibia: "🇳🇦", nepal: "🇳🇵", netherlands: "🇳🇱",
-  "new zealand": "🇳🇿", nicaragua: "🇳🇮", niger: "🇳🇪", nigeria: "🇳🇬", norway: "🇳🇴",
-  oman: "🇴🇲", pakistan: "🇵🇰", panama: "🇵🇦", "papua new guinea": "🇵🇬", paraguay: "🇵🇾",
-  peru: "🇵🇪", philippines: "🇵🇭", poland: "🇵🇱", portugal: "🇵🇹", qatar: "🇶🇦",
-  romania: "🇷🇴", russia: "🇷🇺", rwanda: "🇷🇼", "saudi arabia": "🇸🇦", senegal: "🇸🇳",
-  serbia: "🇷🇸", singapore: "🇸🇬", slovakia: "🇸🇰", slovenia: "🇸🇮", "south africa": "🇿🇦",
-  "south korea": "🇰🇷", spain: "🇪🇸", "sri lanka": "🇱🇰", sudan: "🇸🇩", suriname: "🇸🇷",
-  sweden: "🇸🇪", switzerland: "🇨🇭", syria: "🇸🇾", taiwan: "🇹🇼", tanzania: "🇹🇿",
-  thailand: "🇹🇭", "timor-leste": "🇹🇱", togo: "🇹🇬", "trinidad and tobago": "🇹🇹",
-  tunisia: "🇹🇳", turkey: "🇹🇷", uganda: "🇺🇬", ukraine: "🇺🇦",
-  "united arab emirates": "🇦🇪", "united kingdom": "🇬🇧", "united states": "🇺🇸",
-  uruguay: "🇺🇾", uzbekistan: "🇺🇿", venezuela: "🇻🇪", vietnam: "🇻🇳", yemen: "🇾🇪",
-  zambia: "🇿🇲", zimbabwe: "🇿🇼",
+const COUNTRY_CODES: Record<string, string> = {
+  afghanistan: "af", albania: "al", algeria: "dz", angola: "ao", argentina: "ar",
+  australia: "au", austria: "at", bangladesh: "bd", belgium: "be", bhutan: "bt",
+  bolivia: "bo", brazil: "br", brunei: "bn", bulgaria: "bg", "burkina faso": "bf",
+  myanmar: "mm", burma: "mm", cambodia: "kh", cameroon: "cm", canada: "ca",
+  chad: "td", chile: "cl", china: "cn", colombia: "co", congo: "cd",
+  "costa rica": "cr", croatia: "hr", cuba: "cu", "czech republic": "cz",
+  denmark: "dk", "dominican republic": "do", ecuador: "ec", egypt: "eg",
+  "el salvador": "sv", ethiopia: "et", fiji: "fj", finland: "fi", france: "fr",
+  gabon: "ga", germany: "de", ghana: "gh", greece: "gr", guatemala: "gt",
+  guyana: "gy", haiti: "ht", honduras: "hn", "hong kong": "hk", hungary: "hu",
+  iceland: "is", india: "in", indonesia: "id", iran: "ir", iraq: "iq",
+  ireland: "ie", israel: "il", italy: "it", jamaica: "jm", japan: "jp",
+  jordan: "jo", kazakhstan: "kz", kenya: "ke", kuwait: "kw", laos: "la",
+  latvia: "lv", lebanon: "lb", libya: "ly", lithuania: "lt", luxembourg: "lu",
+  macau: "mo", malawi: "mw", malaysia: "my", maldives: "mv", mali: "ml",
+  malta: "mt", mauritius: "mu", mexico: "mx", mongolia: "mn", montenegro: "me",
+  morocco: "ma", mozambique: "mz", namibia: "na", nepal: "np", netherlands: "nl",
+  "new zealand": "nz", nicaragua: "ni", niger: "ne", nigeria: "ng", norway: "no",
+  oman: "om", pakistan: "pk", panama: "pa", "papua new guinea": "pg", paraguay: "py",
+  peru: "pe", philippines: "ph", poland: "pl", portugal: "pt", qatar: "qa",
+  romania: "ro", russia: "ru", rwanda: "rw", "saudi arabia": "sa", senegal: "sn",
+  serbia: "rs", singapore: "sg", slovakia: "sk", slovenia: "si", "south africa": "za",
+  "south korea": "kr", spain: "es", "sri lanka": "lk", sudan: "sd", suriname: "sr",
+  sweden: "se", switzerland: "ch", syria: "sy", taiwan: "tw", tanzania: "tz",
+  thailand: "th", "timor-leste": "tl", togo: "tg", "trinidad and tobago": "tt",
+  tunisia: "tn", turkey: "tr", uganda: "ug", ukraine: "ua",
+  "united arab emirates": "ae", uae: "ae", "united kingdom": "gb", "united states": "us",
+  uruguay: "uy", uzbekistan: "uz", venezuela: "ve", vietnam: "vn", yemen: "ye",
+  zambia: "zm", zimbabwe: "zw",
+}
+
+function countryFlag(country: string) {
+  const code = COUNTRY_CODES[country.trim().toLowerCase()]
+  if (!code) return <span className="text-sm">🏳️</span>
+  return <img src={`https://flagcdn.com/24x18/${code}.png`} alt={country} className="inline-block rounded-sm" />
 }
 
 const COUNTRIES = [
@@ -130,7 +136,7 @@ const COUNTRIES = [
       { name: "Qatar", cities: ["Doha"] },
       { name: "Saudi Arabia", cities: ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam"] },
       { name: "Syria", cities: ["Damascus", "Aleppo"] },
-      { name: "UAE", cities: ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah"] },
+      { name: "United Arab Emirates", cities: ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah"] },
       { name: "Uzbekistan", cities: ["Tashkent", "Samarkand", "Bukhara"] },
       { name: "Yemen", cities: ["Sana'a", "Aden"] },
     ],
@@ -196,10 +202,6 @@ const COUNTRIES = [
     ],
   },
 ]
-
-function countryFlag(country: string): string {
-  return COUNTRY_FLAGS[country.trim().toLowerCase()] || "🏳️"
-}
 
 function findCountry(name: string) {
   const lower = name.trim().toLowerCase()

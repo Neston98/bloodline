@@ -1,36 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/utils/cn"
-import { Droplet, Shield, Lock, Eye, EyeOff, AlertTriangle, ArrowLeft } from "lucide-react"
-import type { BloodCentre, InventoryStatus } from "@/types"
+import { Droplet, Shield, Lock, Mail, Eye, EyeOff, AlertTriangle, ArrowLeft } from "lucide-react"
+import type { BloodCentre } from "@/types"
 
-const centres: (BloodCentre & { initials: string })[] = [
-  {
-    id: "1", name: "HSA Blood Services Group", address: "11 Outram Road",
-    opening_hours: "08:00 - 20:00", status: "healthy", created_at: "", initials: "HSA",
-  },
-  {
-    id: "2", name: "Woodlands Blood Centre", address: "1 Woodlands Square",
-    opening_hours: "09:00 - 18:00", status: "healthy", created_at: "", initials: "WD",
-  },
-  {
-    id: "3", name: "Tampines Blood Centre", address: "1 Tampines Walk",
-    opening_hours: "09:00 - 18:00", status: "low", created_at: "", initials: "TP",
-  },
-  {
-    id: "4", name: "Jurong East Blood Centre", address: "1 Jurong East Central",
-    opening_hours: "09:00 - 18:00", status: "healthy", created_at: "", initials: "JE",
-  },
-  {
-    id: "5", name: "Mobile Blood Donation Unit", address: "Various locations",
-    opening_hours: "Varies", status: "healthy", created_at: "", initials: "MB",
-  },
-]
+function getInitials(name: string) {
+  return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+}
 
-const statusDot: Record<InventoryStatus, string> = {
+const statusDot: Record<string, string> = {
   critical: "bg-status-critical",
   low: "bg-status-low",
   moderate: "bg-status-moderate",
@@ -39,11 +20,19 @@ const statusDot: Record<InventoryStatus, string> = {
 
 export default function AdminLoginPage() {
   const supabase = createClient()
+  const [centres, setCentres] = useState<BloodCentre[]>([])
   const [centreId, setCentreId] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    supabase.from("blood_centres").select("*").order("name").then(({ data }) => {
+      if (data) setCentres(data)
+    })
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -56,17 +45,24 @@ export default function AdminLoginPage() {
 
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: `admin-${centreId}@bloodline.sg`,
-      password,
+    const { data, error } = await supabase.rpc("admin_login", {
+      p_email: email,
+      p_centre_id: centreId,
     })
 
-    if (error) {
-      setError(error.message)
+    if (error || !data) {
+      setError("Invalid login credentials")
       setLoading(false)
       return
     }
 
+    if (data.password !== password) {
+      setError("Invalid login credentials")
+      setLoading(false)
+      return
+    }
+
+    localStorage.setItem("admin-session", JSON.stringify(data))
     window.location.href = "/admin/dashboard"
   }
 
@@ -94,7 +90,7 @@ export default function AdminLoginPage() {
                 className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
-                  {c.initials}
+                  {getInitials(c.name)}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -104,7 +100,7 @@ export default function AdminLoginPage() {
                     <span
                       className={cn(
                         "h-2 w-2 rounded-full",
-                        statusDot[c.status],
+                        statusDot[c.status] || "bg-gray-400",
                       )}
                     />
                   </div>
@@ -150,6 +146,26 @@ export default function AdminLoginPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-charcoal"
+              >
+                Email
+              </label>
+              <div className="relative mt-1">
+                <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-charcoal/40" />
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-lg border border-warm-200 bg-white py-2.5 pr-4 pl-10 text-sm text-charcoal placeholder:text-charcoal/40 focus:border-blood focus:outline-none focus:ring-1 focus:ring-blood"
+                  placeholder="admin@bloodline.sg"
+                />
+              </div>
             </div>
             <div>
               <label

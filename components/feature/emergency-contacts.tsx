@@ -186,50 +186,45 @@ export function EmergencyContacts({ contacts: initialContacts, donorId }: Emerge
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-red-600">
                   <User className="h-4 w-4" />
                 </div>
+
                 {editingId === contact.id ? (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                      placeholder="Name"
-                    />
-                    <input
-                      value={form.relation}
-                      onChange={(e) => setForm({ ...form, relation: e.target.value })}
-                      className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                      placeholder="Relation"
-                    />
-                    <input
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                      placeholder="Phone"
-                    />
+                  <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-3">
+                      <input
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        placeholder="Name"
+                      />
+                      <input
+                        value={form.relation}
+                        onChange={(e) => setForm({ ...form, relation: e.target.value })}
+                        className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        placeholder="Relation"
+                      />
+                      <input
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                        placeholder="Phone"
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div>
-                    <p className="text-sm font-medium text-black">{contact.name}</p>
-                    <p className="text-xs text-gray-900">{contact.relation}</p>
-                  </div>
+                  <>
+                    <div>
+                      <p className="text-sm font-medium text-black">{contact.name}</p>
+                      <p className="text-xs text-gray-900">{contact.relation}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <Phone className="h-3.5 w-3.5" />
+                      <span>{contact.phone}</span>
+                    </div>
+                  </>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Phone className="h-3.5 w-3.5" />
-                  {editingId === contact.id ? (
-                    <input
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                      placeholder="Phone"
-                    />
-                  ) : (
-                    <span>{contact.phone}</span>
-                  )}
-                </div>
-
+              <div className="flex items-center gap-2 shrink-0">
                 {editingId === contact.id ? (
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => handleSave(contact.id)} disabled={!form.name.trim()}>

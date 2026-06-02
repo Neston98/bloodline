@@ -99,15 +99,14 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem("voucher-redemptions", JSON.stringify(redemptions))
-  }, [redemptions])
+    if (mounted) localStorage.setItem("voucher-redemptions", JSON.stringify(redemptions))
+  }, [redemptions, mounted])
 
   useEffect(() => {
-    localStorage.setItem("voucher-mock-points", String(mockPoints))
-  }, [mockPoints])
+    if (mounted) localStorage.setItem("voucher-mock-points", String(mockPoints))
+  }, [mockPoints, mounted])
 
-  const totalSpent = mounted ? redemptions.reduce((sum, r) => sum + r.pointsCost, 0) : 0
-  const effectivePoints = mounted ? userPoints - totalSpent : userPoints
+  const effectivePoints = mounted ? mockPoints : userPoints
 
   async function handleRedeem(voucher: Voucher) {
     setRedeemingId(voucher.id)
@@ -168,9 +167,7 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
       // Supabase unavailable — use mock fallback
     }
 
-    if (!succeeded) {
-      setMockPoints((p) => p - voucher.points_cost)
-    }
+    setMockPoints((p) => p - voucher.points_cost)
 
     const code = generateCode(prefix)
     const redemption: Redemption = {
