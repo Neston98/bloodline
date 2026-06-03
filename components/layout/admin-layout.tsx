@@ -14,10 +14,13 @@ const navItems = [
 interface AdminLayoutProps {
   currentPath: string
   centreName?: string
+  centreId?: string
   children: ReactNode
 }
 
-function AdminLayout({ currentPath, centreName, children }: AdminLayoutProps) {
+function AdminLayout({ currentPath, centreName, centreId, children }: AdminLayoutProps) {
+  const makeHref = (href: string) => centreId ? `${href}?centre_id=${encodeURIComponent(centreId)}` : href
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0a0a0a]">
       <aside className="flex h-full w-16 flex-col border-r border-white/5 bg-[#1f1f24] md:w-64">
@@ -40,7 +43,7 @@ function AdminLayout({ currentPath, centreName, children }: AdminLayoutProps) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={makeHref(item.href)}
                 className={cn(
                   "flex items-center justify-center gap-3 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors md:justify-start md:px-3",
                   isActive

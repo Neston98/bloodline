@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
-import { computeCapacityPct, computeStatus, MAX_UNITS } from "@/lib/inventory"
+import { computeCapacityPct, computeStatus } from "@/lib/inventory"
 import { AdminDashboardView } from "./admin-dashboard-view"
+import DashboardRedirect from "./dashboard-redirect"
 import type { InventoryStatus, BloodInventory as BI } from "@/types"
 
 interface InventoryItem {
@@ -19,8 +20,6 @@ interface QueueDonor {
   status: "fast_pass" | "scheduled"
 }
 
-const CENTRE_NAME = "Bloodbank@One Punggol"
-
 const FALLBACK_INVENTORY: InventoryItem[] = [
   { blood_type: "O+", units: 28, capacity_pct: 56, status: "healthy" },
   { blood_type: "O-", units: 4, capacity_pct: 8, status: "critical" },
@@ -32,18 +31,9 @@ const FALLBACK_INVENTORY: InventoryItem[] = [
   { blood_type: "AB-", units: 3, capacity_pct: 6, status: "critical" },
 ]
 
-const FALLBACK_QUEUE = [
-  { initials: "JW", name: "James Wong", blood_type: "O+", centre: "Bloodbank@One Punggol", time: "09:00", status: "fast_pass" as const },
-  { initials: "SL", name: "Sarah Lim", blood_type: "A-", centre: "Bloodbank@One Punggol", time: "10:30", status: "scheduled" as const },
-  { initials: "MT", name: "Mike Tan", blood_type: "B+", centre: "Woodlands Blood Centre", time: "11:00", status: "fast_pass" as const },
-]
-
 async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fallback: T, label = "query"): Promise<T> {
   try {
     const result = await fetch()
-    if (result === null || result === undefined) {
-      console.warn(`[BloodLine] ${label}: returned null, using fallback`)
-    }
     return result ?? fallback
   } catch (e) {
     console.error(`[BloodLine] ${label}:`, e)
@@ -54,7 +44,7 @@ async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fa
 function groupInventory(data: BI[]): InventoryItem[] {
   const centres = new Set(data.map((i) => i.centre_id))
   const centreCount = centres.size || 1
-  const nationalMax = MAX_UNITS * centreCount
+  const nationalMax = 800 * centreCount
   const grouped: Record<string, number> = {}
   for (const item of data) {
     grouped[item.blood_type] = (grouped[item.blood_type] || 0) + item.units
@@ -65,53 +55,84 @@ function groupInventory(data: BI[]): InventoryItem[] {
   })
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ centre_id?: string }>
+}) {
+  const params = await searchParams
+  const centreId = params.centre_id
+
+  if (!centreId) {
+    return <DashboardRedirect />
+  }
+
+  const supabase = createAdminClient()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const centreResult = await supabase.from("blood_centres").select("name").eq("id", centreId).single()
+  const centreName = centreResult.data?.name ?? "Blood Centre"
+
   const rawInventory = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
     const { data, error } = await supabase.from("blood_inventory").select("*")
-    if (error) { console.error("[BloodLine] admin blood_inventory:", error.message); return null }
+    if (error) { console.error("[BloodLine] inventory:", error.message); return null }
     return data as BI[]
-  }, null, "admin blood_inventory")
+  }, null, "inventory")
+
+  const appointments = await fetchOrFallback(async () => {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("time_start, blood_type, donor_id, status")
+      .eq("centre_id", centreId)
+      .eq("appointment_date", today)
+      .order("time_start", { ascending: true })
+    if (error) { console.error("[BloodLine] appointments:", error.message); return null }
+    return data as Array<{ time_start: string; blood_type: string; donor_id: string; status: string }>
+  }, null, "appointments")
+
+  let queue: QueueDonor[] = []
+
+  if (appointments && appointments.length > 0) {
+    const donorIds = [...new Set(appointments.map((a) => a.donor_id))]
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, initials")
+      .in("id", donorIds)
+
+    const profileMap = new Map<string, { full_name: string; initials: string }>()
+    if (profiles) {
+      for (const p of profiles as Array<{ id: string; full_name: string; initials: string }>) {
+        profileMap.set(p.id, p)
+      }
+    }
+
+    queue = appointments.map((a) => {
+      const prof = profileMap.get(a.donor_id)
+      return {
+        initials: prof?.initials || "??",
+        name: prof?.full_name || "Unknown",
+        blood_type: a.blood_type,
+        centre: centreName,
+        time: a.time_start,
+        status: (a.status === "fast_pass" ? "fast_pass" : "scheduled") as "fast_pass" | "scheduled",
+      }
+    })
+  }
+
+  const donorCount = await fetchOrFallback(async () => {
+    const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true })
+    if (error) { console.error("[BloodLine] donor count:", error.message); return null }
+    return count ?? 0
+  }, 4812, "donor count")
+
+  const apptCount = queue.length
 
   const inventory: InventoryItem[] = rawInventory ? groupInventory(rawInventory) : FALLBACK_INVENTORY
 
-  const today = new Date().toISOString().slice(0, 10)
-
-  const queue = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("time_start, blood_type, donor_id, centre_id, status, profiles!inner(full_name, initials)")
-      .eq("appointment_date", today)
-      .order("time_start", { ascending: true })
-    if (error) { console.error("[BloodLine] admin queue query:", error.message); return null }
-    return (data || []).map((a: Record<string, unknown>) => ({
-      initials: (a as { profiles: { initials: string } }).profiles?.initials || "??",
-      name: (a as { profiles: { full_name: string } }).profiles?.full_name || "Unknown",
-      blood_type: a.blood_type as string,
-      centre: a.centre_id as string,
-      time: a.time_start as string,
-      status: (a.status === "fast_pass" ? "fast_pass" : "scheduled") as "fast_pass" | "scheduled",
-    }))
-  }, FALLBACK_QUEUE, "admin queue")
-
-  const donorCount = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
-    const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true })
-    if (error) { console.error("[BloodLine] admin donor count:", error.message); return null }
-    return count ?? 0
-  }, 4812, "admin donor count")
-
-  const apptCount = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
-    const { count, error } = await supabase.from("appointments").select("*", { count: "exact", head: true }).eq("appointment_date", today)
-    if (error) { console.error("[BloodLine] admin appt count:", error.message); return null }
-    return count ?? 0
-  }, 127, "admin appt count")
-
   return (
     <AdminDashboardView
-      centreName={CENTRE_NAME}
+      centreName={centreName}
+      centreId={centreId}
       inventory={inventory}
       queue={queue}
       donorCount={donorCount}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -98,13 +98,21 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (mounted) localStorage.setItem("voucher-redemptions", JSON.stringify(redemptions))
-  }, [redemptions, mounted])
+  const hasMountedRef = useRef(false)
 
   useEffect(() => {
-    if (mounted) localStorage.setItem("voucher-mock-points", String(mockPoints))
-  }, [mockPoints, mounted])
+    if (hasMountedRef.current) {
+      localStorage.setItem("voucher-redemptions", JSON.stringify(redemptions))
+    }
+  }, [redemptions])
+
+  useEffect(() => {
+    if (hasMountedRef.current) {
+      localStorage.setItem("voucher-mock-points", String(mockPoints))
+    } else {
+      hasMountedRef.current = true
+    }
+  }, [mockPoints])
 
   const effectivePoints = mounted ? mockPoints : userPoints
 

@@ -27,12 +27,14 @@ interface QueueDonor {
 
 export function AdminDashboardView({
   centreName,
+  centreId,
   inventory,
   queue,
   donorCount,
   apptCount,
 }: {
   centreName: string
+  centreId: string
   inventory: AdminInventoryItem[]
   queue: QueueDonor[]
   donorCount: number
@@ -55,7 +57,7 @@ export function AdminDashboardView({
   const criticalType = inventory.find((i) => i.status === "critical")
 
   return (
-    <AdminLayout currentPath="/admin/dashboard" centreName={centreName}>
+    <AdminLayout currentPath="/admin/dashboard" centreName={centreName} centreId={centreId}>
       <PageHeader greeting={getGreeting()} date={formatToday()} />
 
       {isCritical && criticalType && (
