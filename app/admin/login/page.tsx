@@ -45,25 +45,27 @@ export default function AdminLoginPage() {
 
     setLoading(true)
 
-    const { data, error } = await supabase.rpc("admin_login", {
-      p_email: email,
-      p_centre_id: centreId,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     })
 
-    if (error || !data) {
+    if (error) {
       setError("Invalid login credentials")
       setLoading(false)
       return
     }
 
-    if (data.password !== password) {
-      setError("Invalid login credentials")
+    const role = data.user?.user_metadata?.role
+
+    if (role !== "admin") {
+      await supabase.auth.signOut()
+      setError("This account does not have admin access")
       setLoading(false)
       return
     }
 
-    localStorage.setItem("admin-session", JSON.stringify(data))
-    window.location.href = "/admin/dashboard"
+    window.location.href = `/admin/dashboard?centre_id=${encodeURIComponent(centreId)}`
   }
 
   return (

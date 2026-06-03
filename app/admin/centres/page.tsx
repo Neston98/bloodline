@@ -1,11 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { computeCapacityPct, computeStatus } from "@/lib/inventory"
 import { AdminCentresView } from "./admin-centres-view"
+import CentreRedirect from "../dashboard/dashboard-redirect"
 import type { InventoryStatus } from "@/types"
-
-const CENTRE_NAME = "Bloodbank@One Punggol"
-const CENTRE_ADDRESS = "1 Punggol Drive, #01-01, Singapore 828602"
-const CENTRE_ID = "centre-1"
 
 interface CentreInventoryItem {
   id: string
@@ -39,13 +36,29 @@ async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fa
   }
 }
 
-export default async function AdminCentresPage() {
+export default async function AdminCentresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ centre_id?: string }>
+}) {
+  const params = await searchParams
+  const centreId = params.centre_id
+
+  if (!centreId) {
+    return <CentreRedirect />
+  }
+
+  const supabase = createAdminClient()
+
+  const centreResult = await supabase.from("blood_centres").select("name, address").eq("id", centreId).single()
+  const centreName = centreResult.data?.name ?? "Blood Centre"
+  const centreAddress = centreResult.data?.address ?? ""
+
   const inventory = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("blood_inventory")
       .select("id, blood_type, units")
-      .eq("centre_id", CENTRE_ID)
+      .eq("centre_id", centreId)
       .order("blood_type", { ascending: true })
     if (error) { console.error("[BloodLine] admin centres query:", error.message); return null }
     return (data as Array<{ id: string; blood_type: string; units: number }>)?.map((item) => {
@@ -56,8 +69,9 @@ export default async function AdminCentresPage() {
 
   return (
     <AdminCentresView
-      centreName={CENTRE_NAME}
-      address={CENTRE_ADDRESS}
+      centreName={centreName}
+      address={centreAddress}
+      centreId={centreId}
       inventoryItems={inventory}
     />
   )

@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/utils/cn"
 import { MapPin, Plus, Minus, Save, Building } from "lucide-react"
 import type { InventoryStatus } from "@/types"
 
@@ -30,10 +29,12 @@ function computeStatus(capacityPct: number): InventoryStatus {
 export function AdminCentresView({
   centreName,
   address,
+  centreId,
   inventoryItems,
 }: {
   centreName: string
   address: string
+  centreId: string
   inventoryItems: CentreInventoryItem[]
 }) {
   const [inventory, setInventory] = useState(inventoryItems)
@@ -56,13 +57,15 @@ export function AdminCentresView({
 
   async function handleSave() {
     setSaving(true)
-    const supabase = createClient()
-    for (const item of inventory) {
-      const { error } = await supabase
-        .from("blood_inventory")
-        .update({ units: item.units })
-        .eq("id", item.id)
-      if (error) console.error(`[BloodLine] save inventory ${item.id}:`, error.message)
+    const items = inventory.map((i) => ({ id: i.id, units: i.units }))
+    const res = await fetch("/api/admin/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    })
+    const result = await res.json()
+    if (result.errors?.length) {
+      console.error("[BloodLine] save inventory:", result.errors.join(", "))
     }
     setSaving(false)
     setSaved(true)
@@ -74,7 +77,7 @@ export function AdminCentresView({
   const lowCount = inventory.filter((i) => i.status === "low").length
 
   return (
-    <AdminLayout currentPath="/admin/centres" centreName={centreName}>
+    <AdminLayout currentPath="/admin/centres" centreName={centreName} centreId={centreId}>
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Blood Centres</h1>
@@ -120,11 +123,17 @@ export function AdminCentresView({
             <CardContent className="p-5">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-2xl font-bold text-black">{item.blood_type}</span>
-                <Badge
-                  variant={item.status === "critical" ? "danger" : item.status === "low" || item.status === "moderate" ? "warning" : "success"}
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    item.status === "critical" && "bg-red-100 text-red-700",
+                    item.status === "low" && "bg-orange-100 text-orange-800",
+                    item.status === "moderate" && "bg-yellow-100 text-yellow-800",
+                    item.status === "healthy" && "bg-green-100 text-green-700",
+                  )}
                 >
                   {item.status}
-                </Badge>
+                </span>
               </div>
 
               <div className="mb-2">
@@ -136,7 +145,10 @@ export function AdminCentresView({
                   value={item.capacity_pct}
                   className="mt-1"
                   indicatorClassName={
-                    item.status === "critical" ? "bg-red-500" : item.status === "low" ? "bg-amber-500" : "bg-green-500"
+                    item.status === "critical" ? "bg-status-critical" :
+                    item.status === "low" ? "bg-status-low" :
+                    item.status === "moderate" ? "bg-status-moderate" :
+                    "bg-status-healthy"
                   }
                 />
               </div>

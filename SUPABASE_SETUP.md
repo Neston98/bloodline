@@ -109,16 +109,64 @@ SET
 WHERE id = (SELECT id FROM auth.users WHERE email = 'donor@test.com' LIMIT 1);
 ```
 
-## 7. Set up the admin role
+## 7. Create an admin user
 
-To give a user admin access:
+Admins use Supabase Auth (same as donors) but with `role: 'admin'` in their user metadata. Create one via SQL:
 
 ```sql
-UPDATE profiles SET role = 'admin'
-WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@test.com' LIMIT 1);
+-- Create the auth user first (in Auth dashboard or via API),
+-- then set their admin role and centre assignment:
+
+-- Step 1: Create user in Auth dashboard (Authentication → Users → Add User)
+--    Email: admin@bloodline.sg
+--    Password: (choose a strong password)
+
+-- Step 2: Assign admin role and metadata
+--    Replace the email with the one you used above.
+DO $$
+DECLARE
+  uid uuid;
+BEGIN
+  SELECT id INTO uid FROM auth.users WHERE email = 'admin@bloodline.sg';
+
+  -- Set role in profiles table
+  UPDATE profiles SET role = 'admin' WHERE id = uid;
+
+  -- Set user_metadata so the middleware can check role without a DB query
+  UPDATE auth.users
+  SET raw_user_meta_data =
+    raw_user_meta_data || '{"role": "admin", "centre_id": "' || (
+      SELECT id::text FROM blood_centres WHERE name = 'Bloodbank@HSA' LIMIT 1
+    ) || '", "full_name": "Centre Admin", "initials": "CA"}'::jsonb
+  WHERE id = uid;
+END $$;
 ```
 
-## 8. Running the app
+Replace `'admin@bloodline.sg'` with your admin's email and `'Bloodbank@HSA'` with the centre they belong to.
+
+Repeat for each admin. Each admin must be assigned to a blood centre via `centre_id` in their metadata.
+
+## 8. Create test users via SQL (alternative to Auth dashboard)
+
+For bulk user creation, use the Supabase Management API or this SQL function:
+
+```sql
+-- Enable the pgcrypto extension for password hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Create a test donor user
+SELECT extensions.ultra_create_user(
+  'donor@test.com',
+  'password123',
+  '{"role": "donor"}'::jsonb,
+  '{"full_name": "Bryan Tan", "initials": "BT", "nric": "S****123A",
+    "blood_type": "O-", "date_of_birth": "1990-03-14", "age": 36}'::jsonb
+);
+```
+
+(If `ultra_create_user` is unavailable, use the Auth dashboard and run the UPDATE snippet from step 6.)
+
+## 9. Running the app
 
 ```bash
 npm run dev
@@ -130,5 +178,6 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 - **Pages use mock data by default** — when Supabase is configured, they automatically switch to live database queries
 - **Row Level Security (RLS)** is enabled on all tables — donors can only see their own data, admins can see all
-- **Auth is handled by Supabase Auth** with email/password and OAuth (Singpass via Google OAuth for dev)
-- **The proxy.ts file** handles auth redirects (protected routes redirect to login if unauthenticated)
+- **Auth is handled by Supabase Auth** for both donors and admins (email/password). Admin role is checked via `user.user_metadata.role`
+- **The proxy.ts file** handles auth redirects — unauthenticated users are sent to login, non-admin users are blocked from `/admin/*`
+- **Admin centre_id** is stored in `user.user_metadata.centre_id` and injected into admin dashboard URLs

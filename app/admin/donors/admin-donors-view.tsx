@@ -23,16 +23,18 @@ export interface DonorAppointment {
 
 export function AdminDonorsView({
   centreName,
+  centreId,
   appointments,
 }: {
   centreName: string
+  centreId: string
   appointments: DonorAppointment[]
 }) {
   const [selectedId, setSelectedId] = useState(appointments[0]?.id || "")
   const selected = appointments.find((a) => a.id === selectedId) ?? appointments[0]
 
   return (
-    <AdminLayout currentPath="/admin/donors" centreName={centreName}>
+    <AdminLayout currentPath="/admin/donors" centreName={centreName} centreId={centreId}>
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Donors</h1>

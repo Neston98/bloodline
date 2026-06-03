@@ -2,8 +2,6 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { AdminDonorsView, type DonorAppointment } from "./admin-donors-view"
 import type { BloodType } from "@/types"
 
-const CENTRE_NAME = "Bloodbank@One Punggol"
-
 const FALLBACK_APPOINTMENTS: DonorAppointment[] = [
   { id: "a1", time_start: "09:00", time_end: "09:30", donor_name: "Alex Tan", donor_initials: "AT", blood_type: "O+" as BloodType, status: "fast_pass", phone: "+65 9123 4567", email: "alex.tan@email.com", emergency_contact: { name: "Sarah Tan", relation: "Spouse", phone: "+65 9876 5432" } },
   { id: "a2", time_start: "10:00", time_end: "10:30", donor_name: "Sarah Lim", donor_initials: "SL", blood_type: "A-" as BloodType, status: "scheduled", phone: "+65 9234 5678", email: "sarah.lim@email.com", emergency_contact: { name: "John Lim", relation: "Brother", phone: "+65 8765 4321" } },
@@ -26,14 +24,23 @@ async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fa
   }
 }
 
-export default async function AdminDonorsPage() {
+export default async function AdminDonorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ centre_id?: string }>
+}) {
+  const params = await searchParams
+  const centreId = params.centre_id ?? ""
   const today = new Date().toISOString().slice(0, 10)
 
+  const supabase = createAdminClient()
+  const centreResult = await supabase.from("blood_centres").select("name").eq("id", centreId).single()
+  const centreName = centreResult.data?.name ?? "Blood Centre"
+
   const appointments = await fetchOrFallback(async () => {
-    const supabase = createAdminClient()
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, time_start, time_end, blood_type, status, donor_id, profiles!inner(full_name, initials, phone, email, id)")
+      .select("id, time_start, time_end, blood_type, status, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
       .eq("appointment_date", today)
       .order("time_start", { ascending: true })
     if (error) { console.error("[BloodLine] admin donors query:", error.message); return null }
@@ -58,7 +65,7 @@ export default async function AdminDonorsPage() {
     }
 
     return (data as Array<Record<string, unknown>>).map((a) => {
-      const profile = (a.profiles as Array<Record<string, unknown>>)?.[0] || {}
+      const profile = (a.profiles as Record<string, unknown>) || {}
       return {
       id: a.id as string,
       time_start: a.time_start as string,
@@ -67,11 +74,11 @@ export default async function AdminDonorsPage() {
       donor_initials: (profile.initials as string) || "??",
       blood_type: a.blood_type as BloodType,
       status: (a.status === "fast_pass" ? "fast_pass" : a.status === "scheduled" ? "scheduled" : a.status === "completed" ? "completed" : "cancelled") as DonorAppointment["status"],
-      phone: (profile.phone as string) || "",
+      phone: (profile.mobile as string) || "",
       email: (profile.email as string) || "",
       emergency_contact: ecMap.get(a.donor_id as string) || { name: "Unknown", relation: "Unknown", phone: "N/A" },
     }})
   }, FALLBACK_APPOINTMENTS, "admin donors")
 
-  return <AdminDonorsView centreName={CENTRE_NAME} appointments={appointments} />
+  return <AdminDonorsView centreName={centreName} centreId={centreId} appointments={appointments} />
 }

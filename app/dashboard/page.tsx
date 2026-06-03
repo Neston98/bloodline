@@ -113,8 +113,8 @@ export default async function DashboardPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { console.warn("[BloodLine] No user session found"); return null }
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-    if (error) console.error("[BloodLine] profiles query:", error.message)
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+    if (error) console.error("[BloodLine] profiles query:", error.message); else if (!data) console.warn("[BloodLine] No profile found, using mock")
     return data as Profile
   }, MOCK_PROFILE, "profiles")
 

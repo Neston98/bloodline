@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("")
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -29,7 +29,8 @@ export default function LoginPage() {
       return
     }
 
-    window.location.href = "/dashboard"
+    const role = data.user?.user_metadata?.role
+    window.location.href = role === "admin" ? "/admin/dashboard" : "/dashboard"
   }
 
   async function handleSingpassLogin() {

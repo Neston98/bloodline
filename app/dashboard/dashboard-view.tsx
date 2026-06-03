@@ -34,7 +34,10 @@ export function DashboardView({
 
   const upcomingAppointments = appointments.filter((a) => a.status === "scheduled" || a.status === "fast_pass")
   const pastAppointments = appointments.filter((a) => a.status === "completed" || a.status === "cancelled")
-  const isCritical = filteredInventory.some((i) => i.blood_type === profile.blood_type && i.status === "critical")
+  const criticalCentres = inventory
+    .filter((i) => i.blood_type === profile.blood_type && (i.status === "critical" || i.status === "low"))
+    .map((i) => centres.find((c) => c.id === i.centre_id)?.name || "Unknown")
+    .filter((n, idx, arr) => arr.indexOf(n) === idx)
 
   function formatDate(date: string | null | undefined) {
     if (!date) return "Today"
@@ -62,11 +65,11 @@ export function DashboardView({
     <UserLayout currentPath="/dashboard" profile={profile}>
       <PageHeader greeting={`${getGreeting()}, ${profile.full_name.split(" ")[0]}`} date={formatToday()} />
 
-      {isCritical && <AlertBanner bloodType={profile.blood_type} className="mb-6" />}
+      {criticalCentres.length > 0 && <AlertBanner bloodType={profile.blood_type} centres={criticalCentres} className="mb-6" />}
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard label="Total Donations" value={String(profile.donations_count)} subtext="Lifetime" icon={<Droplets className="h-5 w-5" />} />
-        <StatsCard label="Blood Type" value={profile.blood_type} subtext={isCritical ? "Critical demand" : "Stable supply"} icon={<Heart className="h-5 w-5" />} />
+        <StatsCard label="Blood Type" value={profile.blood_type} subtext={criticalCentres.length > 0 ? "In demand" : "Stable supply"} icon={<Heart className="h-5 w-5" />} />
         <StatsCard label="Reward Points" value={String(profile.points)} subtext={`${getDisplayTier(profile)} Tier`} icon={<Award className="h-5 w-5" />} />
         <StatsCard label="Next Eligible" value={formatDate(profile.next_eligible)} subtext="Donation date" icon={<Calendar className="h-5 w-5" />} />
       </div>

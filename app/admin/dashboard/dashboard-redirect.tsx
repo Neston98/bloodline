@@ -1,28 +1,30 @@
 "use client"
 
 import { useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
 
-export default function DashboardRedirect() {
+export default function CentreRedirect() {
   useEffect(() => {
-    const raw = localStorage.getItem("admin-session")
-    if (!raw) {
-      window.location.href = "/admin/login"
-      return
-    }
+    async function redirect() {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
 
-    try {
-      const session = JSON.parse(raw)
-      if (session?.centre_id) {
+      if (!session?.user) {
+        window.location.href = "/admin/login"
+        return
+      }
+
+      const centreId = session.user.user_metadata?.centre_id
+      if (centreId) {
         const params = new URLSearchParams(window.location.search)
         if (!params.has("centre_id")) {
-          window.location.replace(`/admin/dashboard?centre_id=${encodeURIComponent(session.centre_id)}`)
-          return
+          const path = window.location.pathname
+          window.location.replace(`${path}?centre_id=${encodeURIComponent(centreId)}`)
         }
       }
-    } catch {
-      localStorage.removeItem("admin-session")
-      window.location.href = "/admin/login"
     }
+
+    redirect()
   }, [])
 
   return (

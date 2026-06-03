@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { computeCapacityPct, computeStatus } from "@/lib/inventory"
 import { AdminDashboardView } from "./admin-dashboard-view"
-import DashboardRedirect from "./dashboard-redirect"
+import CentreRedirect from "./dashboard-redirect"
 import type { InventoryStatus, BloodInventory as BI } from "@/types"
 
 interface InventoryItem {
@@ -64,7 +64,7 @@ export default async function AdminDashboardPage({
   const centreId = params.centre_id
 
   if (!centreId) {
-    return <DashboardRedirect />
+    return <CentreRedirect />
   }
 
   const supabase = createAdminClient()
