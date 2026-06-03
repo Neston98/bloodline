@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import UserLayout from "@/components/layout/user-layout"
 import { CheckCircle2, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
-import type { Profile, BloodCentre } from "@/types"
+import { AlertBanner } from "@/components/feature/alert-banner"
+import { checkFastPassEligibility, sendFastPassEmail, recalculateNextEligible } from "@/lib/appointment"
+import type { Profile, BloodCentre, BloodInventory } from "@/types"
 
 const TIME_SLOTS = [
   { label: "09:00–09:20", available: true },
@@ -35,20 +37,60 @@ const TIME_SLOTS = [
   { label: "16:40–17:00", available: true },
 ]
 
-export function NewAppointmentView({ profile, centres }: { profile: Profile; centres: BloodCentre[] }) {
+export function NewAppointmentView({ profile, centres, inventory }: { profile: Profile; centres: BloodCentre[]; inventory: BloodInventory[] }) {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [selectedCentre, setSelectedCentre] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [booked, setBooked] = useState(false)
+  const [fastPassEligible, setFastPassEligible] = useState(false)
+  const [isFastPass, setIsFastPass] = useState(false)
+  const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
+
+  useEffect(() => {
+    const init = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await recalculateNextEligible(user.id)
+      const { data } = await supabase.from("profiles").select("next_eligible").eq("id", user.id).single()
+      if (data?.next_eligible) setLiveNextEligible(data.next_eligible)
+    }
+    init()
+  }, [])
+
+  const fastPassWindow = (() => {
+    const dates: string[] = []
+    for (let i = 0; i < 3; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      dates.push(d.toISOString().slice(0, 10))
+    }
+    return dates
+  })()
+
+  const criticalCentres = centres
+    .filter((c) => inventory.some(
+      (i) => i.centre_id === c.id && i.blood_type === profile.blood_type && (i.status === "critical" || i.status === "low"),
+    ))
+    .map((c) => c.name)
+    .filter((n, i, arr) => arr.indexOf(n) === i)
+
+  useEffect(() => {
+    if (selectedCentre) {
+      checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate).then(setFastPassEligible)
+    } else {
+      setFastPassEligible(false)
+    }
+  }, [selectedCentre, selectedDate, profile.blood_type])
 
   const centre = centres.find((c) => c.id === selectedCentre)
   const canGoNext2 = selectedCentre && selectedDate
   const isDeferred = !!(
     selectedDate &&
-    profile.next_eligible &&
-    selectedDate < profile.next_eligible
+    liveNextEligible &&
+    selectedDate < liveNextEligible
   )
 
   const handleConfirm = async () => {
@@ -56,17 +98,46 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
     if (isDeferred) return
     const supabase = createClient()
     const [start, end] = selectedTime.split("–")
-    const { error } = await supabase.from("appointments").insert({
-      donor_id: profile.id,
-      centre_id: selectedCentre,
-      centre_name: centre?.name,
-      appointment_date: selectedDate,
-      time_start: start,
-      time_end: end,
-      blood_type: profile.blood_type,
-      status: "scheduled",
-    })
+
+    const isFast = await checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate)
+
+    const { data: inserted, error } = await supabase
+      .from("appointments")
+      .insert({
+        donor_id: profile.id,
+        centre_id: selectedCentre,
+        centre_name: centre?.name,
+        appointment_date: selectedDate,
+        time_start: start,
+        time_end: end,
+        blood_type: profile.blood_type,
+        status: "scheduled",
+      })
+      .select("id")
+      .single()
+
     if (error) console.error("[BloodLine] book appointment insert:", error.message)
+
+    if (inserted?.id) {
+      await recalculateNextEligible(profile.id)
+    }
+
+    if (isFast && inserted?.id && centre) {
+      setIsFastPass(true)
+      sendFastPassEmail({
+        email: profile.email,
+        donorName: profile.full_name,
+        donorNric: profile.nric,
+        donorPhone: profile.mobile || "",
+        bloodType: profile.blood_type,
+        centreName: centre.name,
+        date: selectedDate,
+        time: selectedTime,
+        appointmentId: inserted.id,
+        donorId: profile.id,
+      })
+    }
+
     setBooked(true)
     setTimeout(() => router.push("/appointments"), 2000)
   }
@@ -84,6 +155,8 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
         <h1 className="text-2xl font-bold text-black">Schedule New Appointment</h1>
         <p className="mt-1 text-sm text-gray-900">Book your next blood donation slot</p>
       </div>
+
+      {criticalCentres.length > 0 && <AlertBanner bloodType={profile.blood_type} centres={criticalCentres} className="mb-6" showScheduleButton={false} />}
 
       <div className="mb-8 flex items-center gap-2">
         {[1, 2, 3].map((s) => (
@@ -111,6 +184,11 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
             <p className="text-sm text-gray-900">
               {centre?.name} on {selectedDate} at {selectedTime}
             </p>
+            {isFastPass && (
+              <p className="text-sm font-medium text-amber-700">
+                Fast-Pass issued! Check your email for the QR code.
+              </p>
+            )}
             <p className="text-xs text-gray-600">Redirecting to appointments...</p>
           </CardContent>
         </Card>
@@ -155,14 +233,15 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
                   <DatePicker
                     value={selectedDate}
                     onChange={setSelectedDate}
-                    minDate={profile.next_eligible}
+                    minDate={liveNextEligible}
                     direction="down"
+                    highlightDates={fastPassWindow}
                     placeholder="Select donation date"
                     inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                   />
                   {isDeferred && (
                     <p className="mt-1 text-xs text-red-600">
-                      You are deferred from donating until {profile.next_eligible}. Please select a date on or after this date.
+                      You are deferred from donating until {liveNextEligible}. Please select a date on or after this date.
                     </p>
                   )}
                 </div>
@@ -190,7 +269,7 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
                     ))}
                   </div>
                 </div>
-                {selectedCentre && (
+                {fastPassEligible && (
                   <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
                     <Zap className="h-4 w-4" />
                     Fast-Pass eligible — skip the queue at this centre!
@@ -233,10 +312,12 @@ export function NewAppointmentView({ profile, centres }: { profile: Profile; cen
                     <Badge>{profile.blood_type}</Badge>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-800">
-                  <Zap className="h-4 w-4" />
-                  Fast-Pass status: You are eligible for priority queue at this centre.
-                </div>
+                {fastPassEligible && (
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                    <Zap className="h-4 w-4" />
+                    Fast-Pass eligible — you'll skip the queue at this centre!
+                  </div>
+                )}
                 <div className="flex justify-between pt-4">
                   <Button variant="outline" onClick={() => setStep(2)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />

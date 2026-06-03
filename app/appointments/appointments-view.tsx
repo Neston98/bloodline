@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import UserLayout from "@/components/layout/user-layout"
 import { AppointmentCard } from "@/components/feature/appointment-card"
-import { CheckCircle2 } from "lucide-react"
+import { AlertBanner } from "@/components/feature/alert-banner"
+import { CheckCircle2, Zap } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
-import type { Profile, Appointment, BloodCentre } from "@/types"
+import { checkFastPassEligibility, sendFastPassEmail, recalculateNextEligible } from "@/lib/appointment"
+import type { Profile, Appointment, BloodCentre, BloodInventory } from "@/types"
 
 const TIME_SLOTS = [
   "09:00–09:20", "09:20–09:40", "09:40–10:00",
@@ -20,28 +22,101 @@ const TIME_SLOTS = [
   "16:00–16:20", "16:20–16:40", "16:40–17:00",
 ]
 
-export function AppointmentsView({ profile, appointments: initialAppts, centres }: { profile: Profile; appointments: Appointment[]; centres: BloodCentre[] }) {
+export function AppointmentsView({ profile, appointments: initialAppts, centres, inventory }: { profile: Profile; appointments: Appointment[]; centres: BloodCentre[]; inventory: BloodInventory[] }) {
   const [selectedCentre, setSelectedCentre] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [showSuccess, setShowSuccess] = useState(false)
   const [appointments, setAppointments] = useState(initialAppts)
+  const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
+
+  useEffect(() => {
+    const init = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await recalculateNextEligible(user.id)
+      const { data } = await supabase.from("profiles").select("next_eligible").eq("id", user.id).single()
+      if (data?.next_eligible) setLiveNextEligible(data.next_eligible)
+    }
+    init()
+  }, [])
+
+  const [fastPassEligible, setFastPassEligible] = useState(false)
+  const [isFastPass, setIsFastPass] = useState(false)
+
+  const fastPassWindow = (() => {
+    const dates: string[] = []
+    for (let i = 0; i < 3; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      dates.push(d.toISOString().slice(0, 10))
+    }
+    return dates
+  })()
+
+  const isDeferred = !!(
+    selectedDate &&
+    liveNextEligible &&
+    selectedDate < liveNextEligible
+  )
+
+  const criticalCentres = centres
+    .filter((c) => inventory.some(
+      (i) => i.centre_id === c.id && i.blood_type === profile.blood_type && (i.status === "critical" || i.status === "low"),
+    ))
+    .map((c) => c.name)
+    .filter((n, i, arr) => arr.indexOf(n) === i)
 
   const upcoming = appointments.filter((a) => a.status === "scheduled" || a.status === "fast_pass")
   const past = appointments.filter((a) => a.status === "completed" || a.status === "cancelled")
-  const isDeferred = !!(
-    selectedDate &&
-    profile.next_eligible &&
-    selectedDate < profile.next_eligible
-  )
+
+  function isAppointmentFastPass(apt: Appointment) {
+    if (apt.status !== "scheduled" && apt.status !== "fast_pass") return false
+    const inv = inventory.find((i) => i.centre_id === apt.centre_id && i.blood_type === profile.blood_type)
+    return !!inv && (inv.status === "critical" || inv.status === "low")
+  }
+
+  useEffect(() => {
+    if (selectedCentre) {
+      checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate).then(setFastPassEligible)
+    } else {
+      setFastPassEligible(false)
+    }
+  }, [selectedCentre, selectedDate, profile.blood_type])
 
   const handleBook = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
     const centre = centres.find((c) => c.id === selectedCentre)!
     const [start, end] = selectedTime.split("–")
+
+    const isFast = await checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate)
+
+    const supabase = createClient()
+    const { data: inserted, error } = await supabase
+      .from("appointments")
+      .insert({
+        donor_id: profile.id,
+        centre_id: selectedCentre,
+        centre_name: centre.name,
+        appointment_date: selectedDate,
+        time_start: start,
+        time_end: end,
+        blood_type: profile.blood_type,
+        status: "scheduled",
+      })
+      .select("id")
+      .single()
+
+    if (error) console.error("[BloodLine] book appointment insert:", error.message)
+
+    if (inserted?.id) {
+      await recalculateNextEligible(profile.id)
+    }
+
     const newAppt: Appointment = {
-      id: `apt-${Date.now()}`,
+      id: inserted?.id || `apt-${Date.now()}`,
       donor_id: profile.id,
       centre_id: selectedCentre,
       centre_name: centre.name,
@@ -53,19 +128,22 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
       created_at: new Date().toISOString(),
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.from("appointments").insert({
-      donor_id: profile.id,
-      centre_id: selectedCentre,
-      centre_name: centre.name,
-      appointment_date: selectedDate,
-      time_start: start,
-      time_end: end,
-      blood_type: profile.blood_type,
-      status: "scheduled",
-    })
-    if (error) console.error("[BloodLine] book appointment insert:", error.message)
+    if (isFast && inserted?.id) {
+      sendFastPassEmail({
+        email: profile.email,
+        donorName: profile.full_name,
+        donorNric: profile.nric,
+        donorPhone: profile.mobile || "",
+        bloodType: profile.blood_type,
+        centreName: centre.name,
+        date: selectedDate,
+        time: selectedTime,
+        appointmentId: inserted.id,
+        donorId: profile.id,
+      })
+    }
 
+    setIsFastPass(isFast)
     setAppointments((prev) => [newAppt, ...prev])
     setShowSuccess(true)
     setSelectedCentre("")
@@ -74,12 +152,25 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
     setTimeout(() => setShowSuccess(false), 4000)
   }
 
+  const handleCancel = async (appointmentId: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", appointmentId)
+    if (error) {
+      console.error("[BloodLine] cancel appointment error:", error.message)
+      return
+    }
+    setAppointments((prev) => prev.map((a) => a.id === appointmentId ? { ...a, status: "cancelled" as const } : a))
+    await recalculateNextEligible(profile.id)
+  }
+
   return (
     <UserLayout currentPath="/appointments" profile={profile}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-black">Appointments</h1>
         <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
       </div>
+
+      {criticalCentres.length > 0 && <AlertBanner bloodType={profile.blood_type} centres={criticalCentres} className="mb-6" showScheduleButton={false} />}
 
       <Card className="mb-8">
         <CardHeader>
@@ -105,14 +196,15 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
               <DatePicker
                 value={selectedDate}
                 onChange={setSelectedDate}
-                minDate={profile.next_eligible}
+                minDate={liveNextEligible}
                 direction="down"
+                highlightDates={fastPassWindow}
                 placeholder="Select donation date"
                 inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
               {isDeferred && (
                 <p className="mt-1 text-xs text-red-600">
-                  You are deferred from donating until {profile.next_eligible}. Please select a date on or after this date.
+                  You are deferred from donating until {liveNextEligible}. Please select a date on or after this date.
                 </p>
               )}
             </div>
@@ -134,10 +226,16 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
             <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred}>
               Confirm Booking
             </Button>
+            {fastPassEligible && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                <Zap className="h-3.5 w-3.5" />
+                Fast-Pass available
+              </span>
+            )}
             {showSuccess && (
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <CheckCircle2 className="h-4 w-4" />
-                Appointment booked successfully!
+                {isFastPass ? "Fast-Pass issued! Check your email for the QR code." : "Appointment booked successfully!"}
               </div>
             )}
           </div>
@@ -149,7 +247,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres 
         {upcoming.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {upcoming.map((apt) => (
-              <AppointmentCard key={apt.id} appointment={apt} />
+              <AppointmentCard key={apt.id} appointment={apt} onCancel={handleCancel} isFastPass={isAppointmentFastPass(apt)} />
             ))}
           </div>
         ) : (

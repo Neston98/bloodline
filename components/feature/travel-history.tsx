@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { formatDate } from "@/utils/formatters"
+import { recalculateNextEligible } from "@/lib/appointment"
 import type { TravelRecord } from "@/types"
 
 interface TravelHistoryProps {
@@ -356,8 +357,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
   async function handleDeferralEffects(clearedDate: string) {
     if (!clearedDate || clearedDate <= todayLocal()) return
 
-    const { error: profileErr } = await supabase.from("profiles").update({ next_eligible: clearedDate }).eq("id", donorId)
-    if (profileErr) console.error("[BloodLine] update next_eligible error:", profileErr.message)
+    await recalculateNextEligible(donorId)
 
     const { data: appts, error: apptErr } = await supabase
       .from("appointments")
@@ -384,6 +384,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next })
     const { error } = await supabase.from("travel_history").delete().eq("id", id)
     if (error) console.error("[BloodLine] delete travel record error:", error.message)
+    await recalculateNextEligible(donorId)
   }
 
   async function handleBulkDelete() {
@@ -392,6 +393,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
     setSelectedIds(new Set())
     const { error } = await supabase.from("travel_history").delete().in("id", ids)
     if (error) console.error("[BloodLine] bulk delete travel error:", error.message)
+    await recalculateNextEligible(donorId)
   }
 
   function startEdit(record: TravelRecord) {

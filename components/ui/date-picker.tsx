@@ -9,9 +9,10 @@ interface DatePickerProps {
   placeholder?: string
   minDate?: string
   direction?: "up" | "down"
+  highlightDates?: string[]
 }
 
-export function DatePicker({ value, onChange, inputCls = "", placeholder = "Select date", minDate, direction = "up" }: DatePickerProps) {
+export function DatePicker({ value, onChange, inputCls = "", placeholder = "Select date", minDate, direction = "up", highlightDates }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -43,6 +44,12 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
   const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+
+  function isHighlighted(day: number) {
+    if (!highlightDates?.length) return false
+    const d = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+    return highlightDates.includes(d)
+  }
 
   function isDisabled(day: number) {
     if (!minDate) return false
@@ -92,6 +99,7 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1
               const disabled = isDisabled(day)
+              const highlighted = isHighlighted(day)
               const isSel = selected && selected.getDate() === day && selected.getMonth() === viewMonth && selected.getFullYear() === viewYear
               const isToday = today.getDate() === day && today.getMonth() === viewMonth && today.getFullYear() === viewYear
 
@@ -104,11 +112,16 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
                 )
               }
 
+              let bg = "#fff"
+              if (isSel) bg = "#dc2626"
+              else if (highlighted) bg = "#fef9c3"
+              else if (isToday) bg = "#fef2f2"
+
               return (
                 <button key={day} type="button" onClick={() => pick(day)}
-                  style={{ width: cellPx, height: cellPx, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "none", cursor: "pointer", transition: "background 0.15s", backgroundColor: isSel ? "#dc2626" : isToday ? "#fef2f2" : "#fff", color: isSel ? "#fff" : isToday ? "#dc2626" : "#000", fontWeight: isSel || isToday ? "600" : "400" }}
-                  onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.backgroundColor = "#fef2f2" }}
-                  onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.backgroundColor = isToday ? "#fef2f2" : "#fff" }}>
+                  style={{ width: cellPx, height: cellPx, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "none", cursor: "pointer", transition: "background 0.15s", backgroundColor: bg, color: isSel ? "#fff" : highlighted ? "#92400e" : isToday ? "#dc2626" : "#000", fontWeight: isSel || isToday || highlighted ? "600" : "400" }}
+                  onMouseEnter={(e) => { if (!isSel && !highlighted) e.currentTarget.style.backgroundColor = "#fef2f2" }}
+                  onMouseLeave={(e) => { if (!isSel && !highlighted) e.currentTarget.style.backgroundColor = bg }}>
                   {day}
                 </button>
               )
