@@ -36,7 +36,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       await recalculateNextEligible(user.id)
-      const { data } = await supabase.from("profiles").select("next_eligible").eq("id", user.id).single()
+      const { data } = await supabase.from("profiles").select("next_eligible").eq("id", user.id).maybeSingle()
       if (data?.next_eligible) setLiveNextEligible(data.next_eligible)
     }
     init()
@@ -78,7 +78,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   }
 
   useEffect(() => {
-    if (selectedCentre) {
+    if (selectedCentre && selectedDate) {
       checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate).then(setFastPassEligible)
     } else {
       setFastPassEligible(false)
@@ -88,7 +88,8 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   const handleBook = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
-    const centre = centres.find((c) => c.id === selectedCentre)!
+    const centre = centres.find((c) => c.id === selectedCentre)
+    if (!centre) return
     const [start, end] = selectedTime.split("–")
 
     const isFast = await checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate)
@@ -129,18 +130,22 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
     }
 
     if (isFast && inserted?.id) {
-      sendFastPassEmail({
-        email: profile.email,
-        donorName: profile.full_name,
-        donorNric: profile.nric,
-        donorPhone: profile.mobile || "",
-        bloodType: profile.blood_type,
-        centreName: centre.name,
-        date: selectedDate,
-        time: selectedTime,
-        appointmentId: inserted.id,
-        donorId: profile.id,
-      })
+      try {
+        await sendFastPassEmail({
+          email: profile.email,
+          donorName: profile.full_name,
+          donorNric: profile.nric,
+          donorPhone: profile.mobile || "",
+          bloodType: profile.blood_type,
+          centreName: centre.name,
+          date: selectedDate,
+          time: selectedTime,
+          appointmentId: inserted.id,
+          donorId: profile.id,
+        })
+      } catch (e) {
+        console.error("[BloodLine] Fast-Pass email failed:", e)
+      }
     }
 
     setIsFastPass(isFast)

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { computeCapacityPct, computeStatus } from "@/lib/inventory"
 
 export async function checkFastPassEligibility(
   centreId: string,
@@ -19,19 +20,22 @@ export async function checkFastPassEligibility(
   const supabase = createClient()
   const { data, error } = await supabase
     .from("blood_inventory")
-    .select("status, units")
+    .select("units")
     .eq("centre_id", centreId)
     .eq("blood_type", bloodType)
     .maybeSingle()
 
   if (error) {
     console.warn("[FastPass] inventory check error:", error.message)
+    return false
   }
 
-  const eligible = !data
-    ? true
-    : data.status === "critical" || data.status === "low"
-  console.log(`[FastPass] centre=${centreId} type=${bloodType} status=${data?.status} units=${data?.units} eligible=${eligible}`)
+  if (!data) return false
+
+  const pct = computeCapacityPct(data.units)
+  const status = computeStatus(pct)
+  const eligible = status === "critical" || status === "low"
+  console.log(`[FastPass] centre=${centreId} type=${bloodType} units=${data.units} pct=${pct} status=${status} eligible=${eligible}`)
   return eligible
 }
 
@@ -64,15 +68,15 @@ export async function sendFastPassEmail(params: {
 export async function recalculateNextEligible(donorId: string): Promise<string> {
   const supabase = createClient()
   const today = new Date()
-  const todayStr = today.toISOString().slice(0, 10)
 
   const dates: Date[] = [today]
 
-  const { data: appts } = await supabase
+  const { data: appts, error: apptErr } = await supabase
     .from("appointments")
     .select("appointment_date")
     .eq("donor_id", donorId)
     .in("status", ["scheduled", "fast_pass"])
+  if (apptErr) console.warn("[BloodLine] recalculate appts error:", apptErr.message)
 
   if (appts) {
     for (const a of appts) {
@@ -82,11 +86,12 @@ export async function recalculateNextEligible(donorId: string): Promise<string> 
     }
   }
 
-  const { data: travel } = await supabase
+  const { data: travel, error: travelErr } = await supabase
     .from("travel_history")
     .select("cleared_date")
     .eq("donor_id", donorId)
     .eq("status", "pending")
+  if (travelErr) console.warn("[BloodLine] recalculate travel error:", travelErr.message)
 
   if (travel) {
     for (const t of travel) {

@@ -46,8 +46,8 @@ export default async function NewAppointmentPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { console.warn("[BloodLine] No user session found"); return null }
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-    if (error) console.error("[BloodLine] profiles query:", error.message)
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+    if (error) console.error("[BloodLine] profiles query:", error.message); else if (!data) console.warn("[BloodLine] No profile found, using mock")
     return data as Profile
   }, MOCK_PROFILE, "profiles")
 
@@ -62,7 +62,7 @@ export default async function NewAppointmentPage() {
     const supabase = await createClient()
     const { data, error } = await supabase.from("blood_inventory").select("*")
     if (error) { console.error("[BloodLine] blood_inventory query:", error.message); return null }
-    return enrichInventory(data as BloodInventory[])
+    return data ? enrichInventory(data as BloodInventory[]) : null
   }, enrichInventory(MOCK_INVENTORY), "blood_inventory")
 
   return <NewAppointmentView profile={profile} centres={centres} inventory={inventory} />

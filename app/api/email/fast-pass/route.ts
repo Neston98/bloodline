@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createResend } from "@/lib/email"
-import { generateFastPassQr } from "@/lib/qr"
+import { createTransporter } from "@/lib/email"
+import QRCode from "qrcode"
 
 export async function POST(request: NextRequest) {
   const { email, donorName, donorNric, donorPhone, bloodType, centreName, date, time, appointmentId, donorId } = await request.json()
@@ -10,20 +10,34 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const qrDataUrl = await generateFastPassQr(appointmentId, {
-      id: donorId,
-      name: donorName,
+    const payload = JSON.stringify({
+      type: "fast_pass",
+      appointmentId,
+      donorId,
+      donorName,
       nric: donorNric,
       email,
       phone: donorPhone,
       bloodType,
+      issuedAt: Date.now(),
     })
-    const resend = createResend()
 
-    await resend.emails.send({
-      from: "BloodLine <onboarding@resend.dev>",
+    const qrBuffer = await QRCode.toBuffer(payload, { width: 300, margin: 2 })
+
+    const transporter = createTransporter()
+    const emailFrom = process.env.EMAIL_FROM || "BloodLine <donotreply@bloodline.app>"
+
+    await transporter.sendMail({
+      from: emailFrom,
       to: email,
       subject: "Your Fast-Pass QR Code – Blood Donation Appointment",
+      attachments: [
+        {
+          filename: "fast-pass-qr.png",
+          content: qrBuffer,
+          cid: "fastpassqr",
+        },
+      ],
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <div style="background: #dc2626; color: white; padding: 24px; text-align: center; border-radius: 12px 12px 0 0;">
@@ -41,7 +55,7 @@ export async function POST(request: NextRequest) {
             </div>
             <div style="text-align: center; margin-bottom: 16px;">
               <p style="color: #6b7280; font-size: 12px; margin: 0 0 8px;">Present this QR code at the centre to skip the queue</p>
-              <img src="${qrDataUrl}" alt="Fast-Pass QR Code" style="width: 200px; height: 200px;" />
+              <img src="cid:fastpassqr" alt="Fast-Pass QR Code" style="width: 200px; height: 200px;" />
             </div>
             <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
               Please arrive at your scheduled time and show this QR code to the receptionist for priority processing.

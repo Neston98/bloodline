@@ -1,5 +1,15 @@
-import { Resend } from "resend"
+import nodemailer from "nodemailer"
 
-export function createResend() {
-  return new Resend(process.env.RESEND_API_KEY!)
+export function createTransporter() {
+  const user = process.env.GMAIL_USER
+  const pass = process.env.GMAIL_APP_PASSWORD
+
+  if (!user || !pass) {
+    throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD env vars")
+  }
+
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  })
 }
