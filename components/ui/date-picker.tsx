@@ -2,35 +2,38 @@
 
 import { useState, useRef, useEffect } from "react"
 
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+
 interface DatePickerProps {
   value: string
-  onChange: (v: string) => void
-  inputCls?: string
-  placeholder?: string
+  onChange: (value: string) => void
   minDate?: string
-  direction?: "up" | "down"
-  highlightDates?: string[]
+  direction?: "down" | "up"
   align?: "left" | "right"
+  highlightDates?: string[]
+  placeholder?: string
+  inputCls?: string
+  /** Override calendar dropdown width (default: 17rem / 272px) */
+  calendarWidth?: number
 }
 
-export function DatePicker({ value, onChange, inputCls = "", placeholder = "Select date", minDate, direction = "up", highlightDates, align = "left" }: DatePickerProps) {
+const CELL = 36
+
+export function DatePicker({ value, onChange, minDate, direction = "down", align = "left", highlightDates, placeholder, inputCls, calendarWidth }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
-  const [cellPx, setCellPx] = useState(48)
-
-  const selected = value ? new Date(value + "T12:00:00") : null
   const today = new Date()
-  const [viewYear, setViewYear] = useState(today.getFullYear())
-  const [viewMonth, setViewMonth] = useState(today.getMonth())
+  const selected = value ? new Date(value + "T12:00:00") : null
+  const [viewMonth, setViewMonth] = useState(selected ? selected.getMonth() : today.getMonth())
+  const [viewYear, setViewYear] = useState(selected ? selected.getFullYear() : today.getFullYear())
 
   useEffect(() => {
-    if (!open) return
-    const el = gridRef.current
-    if (!el) return
-    const w = el.offsetWidth
-    const gapTotal = 6
-    setCellPx(Math.floor((w - gapTotal) / 7))
+    if (gridRef.current) {
+      const todayBtn = gridRef.current.querySelector(`[data-td]`)
+      if (todayBtn) (todayBtn as HTMLElement).scrollIntoView({ block: "nearest" })
+    }
   }, [open])
 
   useEffect(() => {
@@ -41,10 +44,10 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
+  const cw = calendarWidth ?? 272
+
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
   function isHighlighted(day: number) {
     if (!highlightDates?.length) return false
@@ -64,9 +67,9 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
     setOpen(false)
   }
 
-  function display(value: string) {
-    if (!value) return ""
-    const d = new Date(value + "T12:00:00")
+  function display(v: string) {
+    if (!v) return ""
+    const d = new Date(v + "T12:00:00")
     return d.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })
   }
 
@@ -80,22 +83,22 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
         className={inputCls}
       />
       {open && (
-        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", [align === "right" ? "right" : "left"]: 0, zIndex: 50, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }} className="w-96 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", [align === "right" ? "right" : "left"]: 0, zIndex: 50, width: cw, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }} className="rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
           <div className="mb-2 flex items-center justify-between px-1">
             <button type="button" onClick={() => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">◀</button>
+              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">&#x25C0;</button>
             <span className="text-sm font-semibold text-black">{months[viewMonth]} {viewYear}</span>
             <button type="button" onClick={() => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">▶</button>
+              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">&#x25B6;</button>
           </div>
-          <div className="flex mb-1">
+          <div className="flex mb-1" style={{ width: cw - 24 }}>
             {days.map(d => (
-              <div key={d} style={{ width: cellPx, textAlign: "center" }} className="text-xs font-semibold text-gray-500">{d}</div>
+              <div key={d} className="flex-1 text-center text-xs font-semibold text-gray-500">{d}</div>
             ))}
           </div>
-          <div ref={gridRef} style={{ display: "flex", flexWrap: "wrap", gap: "1px" }}>
+          <div ref={gridRef} style={{ display: "flex", flexWrap: "wrap", width: cw - 24 }}>
             {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`e-${i}`} style={{ width: cellPx, height: cellPx, backgroundColor: "#fff" }} />
+              <div key={`e-${i}`} style={{ width: (cw - 24) / 7, height: CELL }} />
             ))}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1
@@ -106,7 +109,7 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
 
               if (disabled) {
                 return (
-                  <div key={day} style={{ width: cellPx, height: cellPx, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", opacity: 0.25 }}
+                  <div key={day} style={{ width: (cw - 24) / 7, height: CELL, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", opacity: 0.25 }}
                     className="text-gray-400">
                     {day}
                   </div>
@@ -120,7 +123,7 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
 
               return (
                 <button key={day} type="button" onClick={() => pick(day)}
-                  style={{ width: cellPx, height: cellPx, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "none", cursor: "pointer", transition: "background 0.15s", backgroundColor: bg, color: isSel ? "#fff" : highlighted ? "#92400e" : isToday ? "#dc2626" : "#000", fontWeight: isSel || isToday || highlighted ? "600" : "400" }}
+                  style={{ width: (cw - 24) / 7, height: CELL, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", border: "none", cursor: "pointer", transition: "background 0.15s", backgroundColor: bg, color: isSel ? "#fff" : highlighted ? "#92400e" : isToday ? "#dc2626" : "#000", fontWeight: isSel || isToday || highlighted ? "600" : "400" }}
                   onMouseEnter={(e) => { if (!isSel && !highlighted) e.currentTarget.style.backgroundColor = "#fef2f2" }}
                   onMouseLeave={(e) => { if (!isSel && !highlighted) e.currentTarget.style.backgroundColor = bg }}>
                   {day}

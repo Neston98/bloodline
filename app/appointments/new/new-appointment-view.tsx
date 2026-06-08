@@ -44,6 +44,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [booked, setBooked] = useState(false)
+  const [booking, setBooking] = useState(false)
   const [fastPassEligible, setFastPassEligible] = useState(false)
   const [isFastPass, setIsFastPass] = useState(false)
   const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
@@ -96,6 +97,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
   const handleConfirm = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
+    setBooking(true)
     const supabase = createClient()
     const [start, end] = selectedTime.split("–")
 
@@ -116,7 +118,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
       .select("id")
       .single()
 
-    if (error) console.error("[BloodLine] book appointment insert:", error.message)
+    if (error) { console.error("[BloodLine] book appointment insert:", error.message); setBooking(false); return }
 
     if (inserted?.id) {
       await recalculateNextEligible(profile.id)
@@ -143,6 +145,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
     }
 
     setBooked(true)
+    setBooking(false)
     setTimeout(() => router.push("/appointments"), 2000)
   }
 
@@ -327,9 +330,9 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
-                  <Button onClick={handleConfirm}>
+                  <Button onClick={handleConfirm} disabled={booking}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Confirm Booking
+                    {booking ? "Booking..." : "Confirm Booking"}
                   </Button>
                 </div>
               </div>

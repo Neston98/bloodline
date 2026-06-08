@@ -29,6 +29,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [showSuccess, setShowSuccess] = useState(false)
+  const [booking, setBooking] = useState(false)
   const [showRefreshed, setShowRefreshed] = useState(false)
   const [appointments, setAppointments] = useState(initialAppts)
   const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
@@ -77,7 +78,11 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   function isAppointmentFastPass(apt: Appointment) {
     if (apt.status !== "scheduled" && apt.status !== "fast_pass") return false
     const inv = inventory.find((i) => i.centre_id === apt.centre_id && i.blood_type === profile.blood_type)
-    return !!inv && (inv.status === "critical" || inv.status === "low")
+    if (!inv || (inv.status !== "critical" && inv.status !== "low")) return false
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const apptDate = new Date(apt.appointment_date); apptDate.setHours(0, 0, 0, 0)
+    const diffDays = Math.round((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return diffDays >= 0 && diffDays <= 3
   }
 
   useEffect(() => {
@@ -91,6 +96,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   const handleBook = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
+    setBooking(true)
     const centre = centres.find((c) => c.id === selectedCentre)
     if (!centre) return
     const [start, end] = selectedTime.split("–")
@@ -113,7 +119,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       .select("id")
       .single()
 
-    if (error) console.error("[BloodLine] book appointment insert:", error.message)
+    if (error) { console.error("[BloodLine] book appointment insert:", error.message); setBooking(false); return }
 
     if (inserted?.id) {
       await recalculateNextEligible(profile.id)
@@ -157,6 +163,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
     setSelectedCentre("")
     setSelectedDate("")
     setSelectedTime("")
+    setBooking(false)
     setTimeout(() => setShowSuccess(false), 4000)
   }
 
@@ -169,6 +176,13 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
     }
     setAppointments((prev) => prev.map((a) => a.id === appointmentId ? { ...a, status: "cancelled" as const } : a))
     await recalculateNextEligible(profile.id)
+  }
+
+  const handleEditTime = async (id: string, timeStart: string, timeEnd: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.from("appointments").update({ time_start: timeStart, time_end: timeEnd }).eq("id", id)
+    if (error) { console.error("[BloodLine] edit time error:", error.message); return }
+    setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, time_start: timeStart, time_end: timeEnd } : a))
   }
 
   return (
@@ -244,8 +258,8 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
               </select>
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-4">
-            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred}>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred || booking}>
               Confirm Booking
             </Button>
             {fastPassEligible && (
@@ -267,9 +281,9 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       <div className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-black">Upcoming Appointments</h2>
         {upcoming.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {upcoming.map((apt) => (
-              <AppointmentCard key={apt.id} appointment={apt} onCancel={handleCancel} isFastPass={isAppointmentFastPass(apt)} />
+              <AppointmentCard key={apt.id} appointment={apt} onCancel={handleCancel} onEditTime={handleEditTime} isFastPass={isAppointmentFastPass(apt)} />
             ))}
           </div>
         ) : (
@@ -279,7 +293,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
 
       <div>
         <h2 className="mb-4 text-lg font-semibold text-black">Past Appointments</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {past.slice(0, 8).map((apt) => (
             <AppointmentCard key={apt.id} appointment={apt} />
           ))}

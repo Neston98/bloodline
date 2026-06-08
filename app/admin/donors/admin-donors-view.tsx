@@ -76,7 +76,7 @@ export function AdminDonorsView({
           <h1 className="text-2xl font-bold text-black">Donors</h1>
           <p className="mt-1 text-sm text-gray-900">{centreName}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-gray-900">{new Date().toLocaleDateString("en-SG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
           <span className="text-sm font-medium text-gray-900">{appts.length} appointments at this centre</span>
           <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
@@ -89,15 +89,14 @@ export function AdminDonorsView({
               Donors refreshed
             </div>
           )}
-          <div className="w-48">
-            <DatePicker
-              value={dateParam}
-              onChange={(d) => router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}&date=${d}`)}
-              inputCls="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-              direction="down"
-              align="right"
-            />
-          </div>
+          <DatePicker
+            value={dateParam}
+            onChange={(d) => router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}&date=${d}`)}
+            inputCls="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            direction="down"
+            align="right"
+            calendarWidth={240}
+          />
         </div>
       </div>
 

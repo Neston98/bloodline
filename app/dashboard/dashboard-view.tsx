@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { PageHeader } from "@/components/feature/page-header"
 import { StatsCard } from "@/components/feature/stats-card"
 import { AlertBanner } from "@/components/feature/alert-banner"
@@ -32,11 +33,19 @@ export function DashboardView({
   const router = useRouter()
   const [selectedCentreId, setSelectedCentreId] = useState(centres[0]?.id || "")
   const [showRefreshed, setShowRefreshed] = useState(false)
+  const [liveAppts, setLiveAppts] = useState(appointments)
+
+  const handleEditTime = async (id: string, timeStart: string, timeEnd: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.from("appointments").update({ time_start: timeStart, time_end: timeEnd }).eq("id", id)
+    if (error) { console.error("[BloodLine] edit time error:", error.message); return }
+    setLiveAppts((prev) => prev.map((a) => a.id === id ? { ...a, time_start: timeStart, time_end: timeEnd } : a))
+  }
   const selectedCentre = centres.find((c) => c.id === selectedCentreId) || centres[0]
   const filteredInventory = inventory.filter((i) => i.centre_id === selectedCentre?.id)
 
-  const upcomingAppointments = appointments.filter((a) => a.status === "scheduled" || a.status === "fast_pass")
-  const pastAppointments = appointments.filter((a) => a.status === "completed" || a.status === "cancelled")
+  const upcomingAppointments = liveAppts.filter((a) => a.status === "scheduled" || a.status === "fast_pass")
+  const pastAppointments = liveAppts.filter((a) => a.status === "completed" || a.status === "cancelled")
   const criticalCentres = inventory
     .filter((i) => i.blood_type === profile.blood_type && (i.status === "critical" || i.status === "low"))
     .map((i) => centres.find((c) => c.id === i.centre_id)?.name || "Unknown")
@@ -45,7 +54,11 @@ export function DashboardView({
   function isAppointmentFastPass(apt: Appointment) {
     if (apt.status !== "scheduled" && apt.status !== "fast_pass") return false
     const inv = inventory.find((i) => i.centre_id === apt.centre_id && i.blood_type === profile.blood_type)
-    return !!inv && (inv.status === "critical" || inv.status === "low")
+    if (!inv || (inv.status !== "critical" && inv.status !== "low")) return false
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const apptDate = new Date(apt.appointment_date); apptDate.setHours(0, 0, 0, 0)
+    const diffDays = Math.round((apptDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return diffDays >= 0 && diffDays <= 3
   }
 
   function formatDate(date: string | null | undefined) {
@@ -102,7 +115,7 @@ export function DashboardView({
             <select
               value={selectedCentreId}
               onChange={(e) => setSelectedCentreId(e.target.value)}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              className="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
             >
               {centres.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -117,7 +130,7 @@ export function DashboardView({
           {upcomingAppointments.length > 0 ? (
             <div className="space-y-3">
               {upcomingAppointments.map((apt) => (
-                <AppointmentCard key={apt.id} appointment={apt} isFastPass={isAppointmentFastPass(apt)} />
+                <AppointmentCard key={apt.id} appointment={apt} onEditTime={handleEditTime} isFastPass={isAppointmentFastPass(apt)} />
               ))}
             </div>
           ) : (
