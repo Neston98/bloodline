@@ -21,7 +21,7 @@ CREATE TABLE profiles (
   last_hb_meta TEXT,
   donations_count INTEGER DEFAULT 0,
   points INTEGER DEFAULT 0,
-  lifetime_points INTEGER DEFAULT 0,
+  lifetime_points BIGINT,
   next_eligible DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMPTZ DEFAULT now(),
   role TEXT DEFAULT 'donor' CHECK (role IN ('donor', 'admin'))
@@ -234,7 +234,7 @@ CREATE POLICY "Donors can insert own redemptions"
   ON reward_redemptions FOR INSERT
   WITH CHECK (auth.uid() = donor_id);
 
--- 14. Function to deduct points from donor balance
+-- 13. Function to deduct points from donor balance
 CREATE OR REPLACE FUNCTION deduct_points(p_donor_id UUID, p_points INTEGER)
 RETURNS void AS $$
 BEGIN
