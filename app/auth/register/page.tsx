@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { Droplet, Shield, Mail, Lock, Eye, EyeOff, User, AlertTriangle } from "lucide-react"
+import { Droplets, Shield, Mail, Lock, Eye, EyeOff, User, AlertTriangle } from "lucide-react"
 import type { BloodType } from "@/types"
 
 const bloodTypes: BloodType[] = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
@@ -85,7 +85,7 @@ export default function RegisterPage() {
       <div className="flex flex-col justify-center bg-charcoal px-8 py-12 md:w-1/2 md:px-16 lg:px-24">
         <div className="mx-auto max-w-sm">
           <Link href="/" className="mb-10 flex items-center gap-3">
-            <Droplet className="h-8 w-8 text-blood" />
+            <Droplets className="h-8 w-8 text-blood" />
             <span className="text-2xl font-bold text-white">BloodLine</span>
           </Link>
           <h1 className="text-3xl font-bold leading-tight text-white">
@@ -105,7 +105,7 @@ export default function RegisterPage() {
               </span>
             </div>
             <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-              <Droplet className="h-5 w-5 text-blood" />
+              <Droplets className="h-5 w-5 text-blood" />
               <span className="text-sm text-white/70">
                 Free donor perks &amp; rewards
               </span>

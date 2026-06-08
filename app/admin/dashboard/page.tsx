@@ -85,6 +85,7 @@ export default async function AdminDashboardPage({
       .select("time_start, blood_type, donor_id, status")
       .eq("centre_id", centreId)
       .eq("appointment_date", today)
+      .in("status", ["scheduled", "fast_pass"])
       .order("time_start", { ascending: true })
     if (error) { console.error("[BloodLine] appointments:", error.message); return null }
     return data as Array<{ time_start: string; blood_type: string; donor_id: string; status: string }>

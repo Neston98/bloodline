@@ -65,17 +65,17 @@ export async function sendFastPassEmail(params: {
   console.log("[FastPass] Email sent successfully")
 }
 
-export async function recalculateNextEligible(donorId: string): Promise<string> {
-  const supabase = createClient()
+export async function recalculateNextEligible(donorId: string, supabase?: any): Promise<string> {
+  const client = supabase || createClient()
   const today = new Date()
 
   const dates: Date[] = [today]
 
-  const { data: appts, error: apptErr } = await supabase
+  const { data: appts, error: apptErr } = await client
     .from("appointments")
     .select("appointment_date")
     .eq("donor_id", donorId)
-    .in("status", ["scheduled", "fast_pass"])
+    .in("status", ["scheduled", "fast_pass", "completed"])
   if (apptErr) console.warn("[BloodLine] recalculate appts error:", apptErr.message)
 
   if (appts) {
@@ -86,7 +86,7 @@ export async function recalculateNextEligible(donorId: string): Promise<string> 
     }
   }
 
-  const { data: travel, error: travelErr } = await supabase
+  const { data: travel, error: travelErr } = await client
     .from("travel_history")
     .select("cleared_date")
     .eq("donor_id", donorId)
@@ -104,6 +104,6 @@ export async function recalculateNextEligible(donorId: string): Promise<string> 
   const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())))
   const nextEligible = maxDate.toISOString().slice(0, 10)
 
-  await supabase.from("profiles").update({ next_eligible: nextEligible }).eq("id", donorId)
+  await client.from("profiles").update({ next_eligible: nextEligible }).eq("id", donorId)
   return nextEligible
 }

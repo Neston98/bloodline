@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import UserLayout from "@/components/layout/user-layout"
 import { AppointmentCard } from "@/components/feature/appointment-card"
 import { AlertBanner } from "@/components/feature/alert-banner"
-import { CheckCircle2, Zap } from "lucide-react"
+import { CheckCircle2, Zap, RefreshCw } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import { checkFastPassEligibility, sendFastPassEmail, recalculateNextEligible } from "@/lib/appointment"
 import type { Profile, Appointment, BloodCentre, BloodInventory } from "@/types"
@@ -23,10 +24,12 @@ const TIME_SLOTS = [
 ]
 
 export function AppointmentsView({ profile, appointments: initialAppts, centres, inventory }: { profile: Profile; appointments: Appointment[]; centres: BloodCentre[]; inventory: BloodInventory[] }) {
+  const router = useRouter()
   const [selectedCentre, setSelectedCentre] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showRefreshed, setShowRefreshed] = useState(false)
   const [appointments, setAppointments] = useState(initialAppts)
   const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
 
@@ -170,9 +173,23 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
 
   return (
     <UserLayout currentPath="/appointments" profile={profile}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-black">Appointments</h1>
-        <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
+      <div className="relative mb-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-black">Appointments</h1>
+            <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
+          </div>
+          <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            title="Refresh appointments">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+        {showRefreshed && (
+          <div className="absolute top-0 right-0 mt-1 mr-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+            Appointments refreshed
+          </div>
+        )}
       </div>
 
       {criticalCentres.length > 0 && <AlertBanner bloodType={profile.blood_type} centres={criticalCentres} className="mb-6" showScheduleButton={false} />}
@@ -263,7 +280,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       <div>
         <h2 className="mb-4 text-lg font-semibold text-black">Past Appointments</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {past.map((apt) => (
+          {past.slice(0, 8).map((apt) => (
             <AppointmentCard key={apt.id} appointment={apt} />
           ))}
         </div>

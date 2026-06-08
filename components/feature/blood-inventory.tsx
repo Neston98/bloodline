@@ -9,10 +9,10 @@ interface BloodInventoryProps {
 }
 
 function barColor(status: BloodInventory["status"]) {
-  if (status === "critical") return "bg-status-critical"
-  if (status === "low") return "bg-status-low"
-  if (status === "moderate") return "bg-status-moderate"
-  return "bg-status-healthy"
+  if (status === "critical") return "bg-red-600"
+  if (status === "low") return "bg-amber-600"
+  if (status === "moderate") return "bg-yellow-500"
+  return "bg-green-600"
 }
 
 export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
@@ -26,11 +26,11 @@ export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
           {inventory.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="w-10 text-sm font-bold text-black">{item.blood_type}</span>
-                <div className="h-2 w-32 rounded-full bg-gray-100">
+                <span className="w-10 shrink-0 text-sm font-bold text-black">{item.blood_type}</span>
+                <div className="h-2 w-52 rounded-full bg-gray-100">
                   <div
                     className={cn("h-full rounded-full transition-all", barColor(item.status))}
-                    style={{ width: `${item.capacity_pct}%` }}
+                    style={{ width: `${Math.max(2, item.capacity_pct ?? 0)}%` }}
                   />
                 </div>
               </div>

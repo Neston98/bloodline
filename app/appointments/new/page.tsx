@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { enrichInventory } from "@/lib/inventory"
+import { recalculateNextEligible } from "@/lib/appointment"
 import { NewAppointmentView } from "./new-appointment-view"
 import type { Profile, BloodCentre, BloodInventory } from "@/types"
 
@@ -42,6 +43,22 @@ async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fa
 }
 
 export default async function NewAppointmentPage() {
+  try {
+    const s = await createClient()
+    const { data: { user } } = await s.auth.getUser()
+    if (user) {
+      await s
+        .from("appointments")
+        .update({ status: "cancelled" })
+        .eq("donor_id", user.id)
+        .in("status", ["scheduled", "fast_pass"])
+        .lt("appointment_date", new Date().toISOString().slice(0, 10))
+      await recalculateNextEligible(user.id, s)
+    }
+  } catch (e) {
+    console.error("[BloodLine] auto-cancel:", e)
+  }
+
   const profile = await fetchOrFallback(async () => {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

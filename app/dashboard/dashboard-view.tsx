@@ -131,6 +131,13 @@ export function DashboardView({
                 {pastAppointments.slice(0, 2).map((apt) => (
                 <AppointmentCard key={apt.id} appointment={apt} />
                 ))}
+                <button
+                  type="button"
+                  onClick={() => router.push("/appointments")}
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  See more
+                </button>
               </div>
             </>
           )}

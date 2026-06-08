@@ -1,7 +1,9 @@
 export const MAX_UNITS = 800
 
 export function computeCapacityPct(units: number, max = MAX_UNITS): number {
-  return Math.min(100, Math.round((units / max) * 100))
+  const u = Math.max(0, Number(units) || 0)
+  const m = Math.max(1, Number(max) || MAX_UNITS)
+  return Math.min(100, Math.round((u / m) * 100))
 }
 
 export function computeStatus(pct: number): "critical" | "low" | "moderate" | "healthy" {

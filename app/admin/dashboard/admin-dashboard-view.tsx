@@ -1,12 +1,14 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { PageHeader } from "@/components/feature/page-header"
 import { StatsCard } from "@/components/feature/stats-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/utils/cn"
-import { Users, Zap, Droplets, Clock, AlertTriangle } from "lucide-react"
+import { Users, Zap, Droplets, Clock, AlertTriangle, RefreshCw } from "lucide-react"
 import type { InventoryStatus } from "@/types"
 
 interface AdminInventoryItem {
@@ -40,6 +42,14 @@ export function AdminDashboardView({
   donorCount: number
   apptCount: number
 }) {
+  const router = useRouter()
+  const [showRefreshed, setShowRefreshed] = useState(false)
+  const totalWaitMin = queue.length * 20
+  const fastPassCount = queue.filter((q) => q.status === "fast_pass").length
+  const surgeMin = Math.min(totalWaitMin, fastPassCount * 5)
+  const waitDisplay = totalWaitMin < 60 ? `${totalWaitMin}min` : `${Math.floor(totalWaitMin / 60)}h ${totalWaitMin % 60}min`
+  const surgeDisplay = surgeMin > 0 ? `+${surgeMin} min surge` : "On time"
+
   function getGreeting() {
     const hour = new Date().getHours()
     if (hour < 12) return "Good Morning"
@@ -58,7 +68,19 @@ export function AdminDashboardView({
 
   return (
     <AdminLayout currentPath="/admin/dashboard" centreName={centreName} centreId={centreId}>
-      <PageHeader greeting={getGreeting()} date={formatToday()} />
+      <div className="relative flex items-start justify-between">
+        <PageHeader greeting={getGreeting()} date={formatToday()} />
+        <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          title="Refresh dashboard">
+          <RefreshCw className="h-4 w-4" />
+        </button>
+        {showRefreshed && (
+          <div className="absolute top-0 right-0 mt-1 mr-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+            Dashboard refreshed
+          </div>
+        )}
+      </div>
 
       {isCritical && criticalType && (
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -74,7 +96,7 @@ export function AdminDashboardView({
         <StatsCard label="Active Donors" value={donorCount.toLocaleString()} subtext="Registered" icon={<Users className="h-5 w-5" />} />
         <StatsCard label="Fast-Passes Today" value={queue.filter((q) => q.status === "fast_pass").length.toString()} subtext={isCritical ? "Critical trigger active" : "Normal"} icon={<Zap className="h-5 w-5" />} />
         <StatsCard label="Donations Today" value={apptCount.toString()} subtext="All appointments" icon={<Droplets className="h-5 w-5" />} />
-        <StatsCard label="Queue Wait Time" value="8min" subtext="+3 min surge" icon={<Clock className="h-5 w-5" />} />
+        <StatsCard label="Queue Wait Time" value={waitDisplay} subtext={surgeDisplay} icon={<Clock className="h-5 w-5" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

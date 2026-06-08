@@ -7,7 +7,7 @@ interface MilestoneListProps {
 
 function badgeBg(earned: boolean) {
   return earned
-    ? "bg-gradient-to-br from-amber-100 to-amber-200 ring-2 ring-amber-400 shadow-md"
+    ? "bg-gray-50 ring-1 ring-gray-200"
     : "bg-gray-100 ring-1 ring-gray-200 opacity-50"
 }
 

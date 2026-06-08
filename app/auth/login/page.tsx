@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { Droplet, Shield, Mail, Lock, Eye, EyeOff, AlertTriangle } from "lucide-react"
+import { Droplets, Shield, Mail, Lock, Eye, EyeOff, AlertTriangle } from "lucide-react"
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="flex flex-col justify-center bg-charcoal px-8 py-12 md:w-1/2 md:px-16 lg:px-24">
         <div className="mx-auto max-w-sm">
           <Link href="/" className="mb-10 flex items-center gap-3">
-            <Droplet className="h-8 w-8 text-blood" />
+            <Droplets className="h-8 w-8 text-blood" />
             <span className="text-2xl font-bold text-white">BloodLine</span>
           </Link>
           <h1 className="text-3xl font-bold leading-tight text-white">

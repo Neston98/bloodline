@@ -10,9 +10,10 @@ interface DatePickerProps {
   minDate?: string
   direction?: "up" | "down"
   highlightDates?: string[]
+  align?: "left" | "right"
 }
 
-export function DatePicker({ value, onChange, inputCls = "", placeholder = "Select date", minDate, direction = "up", highlightDates }: DatePickerProps) {
+export function DatePicker({ value, onChange, inputCls = "", placeholder = "Select date", minDate, direction = "up", highlightDates, align = "left" }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -79,7 +80,7 @@ export function DatePicker({ value, onChange, inputCls = "", placeholder = "Sele
         className={inputCls}
       />
       {open && (
-        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", left: 0, zIndex: 50, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }} className="w-96 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", [align === "right" ? "right" : "left"]: 0, zIndex: 50, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }} className="w-96 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
           <div className="mb-2 flex items-center justify-between px-1">
             <button type="button" onClick={() => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }}
               className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">◀</button>

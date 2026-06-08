@@ -55,6 +55,7 @@ export interface Appointment {
   time_end: string
   blood_type: BloodType
   status: "scheduled" | "fast_pass" | "completed" | "cancelled"
+  admin_approved?: boolean
   created_at: string
 }
 

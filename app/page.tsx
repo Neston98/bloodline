@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { computeCapacityPct, computeStatus, MAX_UNITS } from "@/lib/inventory"
-import { Droplet, Shield, ArrowRight, AlertTriangle } from "lucide-react"
+import { Droplets, Shield, ArrowRight, AlertTriangle } from "lucide-react"
 import type { BloodType, InventoryStatus, BloodInventory as BI } from "@/types"
 
 interface InventoryItem {
@@ -63,7 +63,7 @@ function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-charcoal">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <Droplet className="h-6 w-6 text-blood" />
+          <Droplets className="h-6 w-6 text-blood" />
           <span className="text-lg font-bold tracking-tight text-white">
             BloodLine
           </span>
@@ -269,7 +269,7 @@ function Footer() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-3">
-            <Droplet className="h-6 w-6 text-blood" />
+            <Droplets className="h-6 w-6 text-blood" />
             <span className="text-lg font-bold text-white">BloodLine</span>
           </div>
           <p className="text-center text-sm text-white/40 sm:text-right">

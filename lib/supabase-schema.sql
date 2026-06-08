@@ -93,6 +93,7 @@ CREATE TABLE appointments (
   time_end TEXT NOT NULL,
   blood_type TEXT NOT NULL,
   status TEXT DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'fast_pass', 'completed', 'cancelled')),
+  admin_approved BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -268,5 +269,9 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION handle_new_user();
 
--- 14. Seed data (run after setting up auth)
+-- [Migration] Add admin_approved to existing appointments table
+-- Run this separately if you already ran the original schema:
+-- ALTER TABLE appointments ADD COLUMN IF NOT EXISTS admin_approved BOOLEAN DEFAULT false;
+
+-- Seed data (run after setting up auth)
 -- Insert seed data via the Supabase dashboard SQL editor after running this

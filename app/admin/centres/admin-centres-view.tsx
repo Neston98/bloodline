@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -40,6 +40,11 @@ export function AdminCentresView({
   const [inventory, setInventory] = useState(inventoryItems)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState("")
+
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleDateString("en-SG", { weekday: "long", hour: "2-digit", minute: "2-digit", hour12: true }))
+  }, [])
 
   function adjustUnits(idx: number, delta: number) {
     setInventory((prev) => {
@@ -82,7 +87,7 @@ export function AdminCentresView({
         <div>
           <h1 className="text-2xl font-bold text-black">Blood Centres</h1>
           <p className="mt-1 text-sm text-gray-900">
-            Last Updated: {new Date().toLocaleDateString("en-SG", { weekday: "long", hour: "2-digit", minute: "2-digit" })}
+            Last Updated: {lastUpdated || "Loading..."}
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
