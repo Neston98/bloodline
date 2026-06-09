@@ -124,60 +124,89 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'donor@test.com' LIMIT 1);
 
 ## 8. Create an admin user
 
-Admins use Supabase Auth (same as donors) but with `role: 'admin'` in their user metadata. Create one via SQL:
+Admins use Supabase Auth (same as donors) but with `role: 'admin'` in their user metadata.
+
+Run this in the Supabase **SQL Editor** to create an admin directly:
 
 ```sql
--- Create the auth user first (in Auth dashboard or via API),
--- then set their admin role and centre assignment:
+-- 1. Find the centre UUID
+SELECT id, name FROM blood_centres;
 
--- Step 1: Create user in Auth dashboard (Authentication → Users → Add User)
---    Email: admin@bloodline.sg
---    Password: (choose a strong password)
+-- 2. Create the auth user and set admin metadata
+--    Paste the centre UUID from step 1 into centre_id below.
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, email_change, email_change_token_new, recovery_token
+)
+SELECT
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(),
+  'authenticated',
+  'authenticated',
+  'admin@bloodline.sg',
+  crypt('your-password-here', gen_salt('bf')),
+  now(),
+  jsonb_build_object(
+    'role', 'admin',
+    'centre_id', '<paste-centre-uuid-here>',
+    'full_name', 'Centre Admin',
+    'initials', 'CA'
+  ),
+  now(),
+  now(),
+  '', '', '', ''
+WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@bloodline.sg');
 
--- Step 2: Assign admin role and metadata
---    Replace the email with the one you used above.
-DO $$
-DECLARE
-  uid uuid;
-BEGIN
-  SELECT id INTO uid FROM auth.users WHERE email = 'admin@bloodline.sg';
-
-  -- Set role in profiles table
-  UPDATE profiles SET role = 'admin' WHERE id = uid;
-
-  -- Set user_metadata so the middleware can check role without a DB query
-  UPDATE auth.users
-  SET raw_user_meta_data =
-    raw_user_meta_data || '{"role": "admin", "centre_id": "' || (
-      SELECT id::text FROM blood_centres WHERE name = 'Bloodbank@HSA' LIMIT 1
-    ) || '", "full_name": "Centre Admin", "initials": "CA"}'::jsonb
-  WHERE id = uid;
-END $$;
+-- 3. Set profiles.role
+UPDATE profiles SET role = 'admin'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@bloodline.sg' LIMIT 1);
 ```
-
-Replace `'admin@bloodline.sg'` with your admin's email and `'Bloodbank@HSA'` with the centre they belong to.
 
 Repeat for each admin. Each admin must be assigned to a blood centre via `centre_id` in their metadata.
 
-## 9. Create test users via SQL (alternative to Auth dashboard)
+## 9. Create test donor user via SQL (alternative to Auth dashboard)
 
-For bulk user creation, use the Supabase Management API or this SQL function:
+If the Auth dashboard **Users** page won't let you add users, run this in the SQL Editor:
 
 ```sql
--- Enable the pgcrypto extension for password hashing
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- Create a test donor user
-SELECT extensions.ultra_create_user(
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, email_change, email_change_token_new, recovery_token
+)
+SELECT
+  '00000000-0000-0000-0000-000000000000',
+  gen_random_uuid(),
+  'authenticated',
+  'authenticated',
   'donor@test.com',
-  'password123',
+  crypt('password123', gen_salt('bf')),
+  now(),
   '{"role": "donor"}'::jsonb,
-  '{"full_name": "Bryan Tan", "initials": "BT", "nric": "S****123A",
-    "blood_type": "O-", "date_of_birth": "1990-03-14", "age": 36}'::jsonb
-);
-```
+  now(),
+  now(),
+  '', '', '', ''
+WHERE NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'donor@test.com');
 
-(If `ultra_create_user` is unavailable, use the Auth dashboard and run the UPDATE snippet from step 6.)
+-- Then set the profile fields
+UPDATE profiles SET
+  full_name = 'Bryan Tan',
+  initials = 'BT',
+  nric = 'S****123A',
+  blood_type = 'O-',
+  date_of_birth = '1990-03-14',
+  age = 36,
+  mobile = '+65 9754 6671',
+  email = 'bryantan@gmail.com',
+  address = 'Blk 412 Clementi Ave 1, #08-22, S120412',
+  weight_kg = 72,
+  donations_count = 12,
+  points = 2400,
+  lifetime_points = 2400,
+  next_eligible = CURRENT_DATE
+WHERE id = (SELECT id FROM auth.users WHERE email = 'donor@test.com' LIMIT 1);
+```
 
 ## 10. Running the app
 

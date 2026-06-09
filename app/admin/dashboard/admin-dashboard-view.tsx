@@ -121,9 +121,10 @@ export function AdminDashboardView({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{item.units} / 50 units</span>
+                    <span className="text-sm text-gray-600">{item.units} units</span>
                     <Badge
                       variant={item.status === "critical" ? "danger" : item.status === "low" || item.status === "moderate" ? "warning" : "success"}
+                      className="w-16 justify-center shrink-0"
                     >
                       {item.status}
                     </Badge>
