@@ -41,7 +41,15 @@ GMAIL_APP_PASSWORD=your-16-char-app-password
    - Set `Site URL` to `http://localhost:3000`
    - Add `http://localhost:3000/auth/callback` to **Redirect URLs**
 
-## 5. Seed the database
+## 5. Grant service_role access
+
+Admin pages use the service role key (bypasses RLS). You must grant read access:
+
+```sql
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO service_role;
+```
+
+## 6. Seed the database
 
 After running the migration, run these inserts in the SQL Editor to populate initial data:
 
@@ -85,7 +93,7 @@ INSERT INTO milestones (name, icon, description, condition) VALUES
   ('Platinum donor', 'trophy', 'Reach Platinum tier', '3000 points');
 ```
 
-## 6. Create a test user
+## 7. Create a test donor user
 
 1. Go to **Authentication → Users** and click **Add User**
 2. Create a test user:
@@ -109,11 +117,12 @@ SET
   weight_kg = 72,
   donations_count = 12,
   points = 2400,
+  lifetime_points = 2400,
   next_eligible = CURRENT_DATE
 WHERE id = (SELECT id FROM auth.users WHERE email = 'donor@test.com' LIMIT 1);
 ```
 
-## 7. Create an admin user
+## 8. Create an admin user
 
 Admins use Supabase Auth (same as donors) but with `role: 'admin'` in their user metadata. Create one via SQL:
 
@@ -150,7 +159,7 @@ Replace `'admin@bloodline.sg'` with your admin's email and `'Bloodbank@HSA'` wit
 
 Repeat for each admin. Each admin must be assigned to a blood centre via `centre_id` in their metadata.
 
-## 8. Create test users via SQL (alternative to Auth dashboard)
+## 9. Create test users via SQL (alternative to Auth dashboard)
 
 For bulk user creation, use the Supabase Management API or this SQL function:
 
@@ -170,7 +179,7 @@ SELECT extensions.ultra_create_user(
 
 (If `ultra_create_user` is unavailable, use the Auth dashboard and run the UPDATE snippet from step 6.)
 
-## 9. Running the app
+## 10. Running the app
 
 ```bash
 npm run dev
@@ -185,3 +194,7 @@ Then open [http://localhost:3000](http://localhost:3000).
 - **Auth is handled by Supabase Auth** for both donors and admins (email/password). Admin role is checked via `user.user_metadata.role`
 - **The proxy.ts file** handles auth redirects — unauthenticated users are sent to login, non-admin users are blocked from `/admin/*`
 - **Admin centre_id** is stored in `user.user_metadata.centre_id` and injected into admin dashboard URLs
+- **`donations` table** is defined in the schema but unused by any code. `donations_count` is stored directly on `profiles`. You can safely drop the `donations` table.
+- **`InventoryStatus` CHECK mismatch**: The schema CHECK constraint uses values `'critical', 'low', 'good', 'sufficient'` but the code types use `"critical" | "low" | "moderate" | "healthy"`. The mismatch is intentional — the actual DB has the CHECK values; the code computes `capacity_pct` and `status` from `units` at runtime, never reading the DB columns directly. See `lib/inventory.ts`.
+- **Fast-pass email** uses Nodemailer with Gmail SMTP. You must enable 2FA on the sending Gmail account and generate an App Password (16 lowercase letters). Set `GMAIL_USER`, `GMAIL_APP_PASSWORD`, and `EMAIL_FROM` in `.env.local`.
+- **QLN (Quick Login Note)**: `/admin/login` uses `supabase.auth.signInWithPassword()` + `user_metadata.role` check — no custom RPC or localStorage.
