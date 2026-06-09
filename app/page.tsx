@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { computeCapacityPct, computeStatus, MAX_UNITS } from "@/lib/inventory"
+import { computeCapacityPct, computeStatus, MAX_UNITS, padBloodTypes, ALL_BLOOD_TYPES } from "@/lib/inventory"
 import { Droplets, Shield, ArrowRight, AlertTriangle } from "lucide-react"
 import type { BloodType, InventoryStatus, BloodInventory as BI } from "@/types"
 
@@ -295,12 +295,7 @@ export default async function Home() {
     for (const item of raw) {
       grouped[item.blood_type] = (grouped[item.blood_type] || 0) + item.units
     }
-    return (Object.entries(grouped) as [BloodType, number][]).map(([blood_type, units]) => ({
-      blood_type,
-      units,
-      capacity_pct: computeCapacityPct(units, nationalMax),
-      status: computeStatus(computeCapacityPct(units, nationalMax)),
-    }))
+    return padBloodTypes(Object.entries(grouped).map(([blood_type, units]) => ({ blood_type: blood_type as BloodType, units })), nationalMax)
   }, FALLBACK_INVENTORY, "blood_inventory")
 
   return (

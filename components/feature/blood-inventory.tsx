@@ -1,7 +1,9 @@
 import { cn } from "@/utils/cn"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { BloodInventory } from "@/types"
+import type { BloodInventory, BloodType } from "@/types"
+
+const ALL_BLOOD_TYPES = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
 
 interface BloodInventoryProps {
   inventory: BloodInventory[]
@@ -15,7 +17,20 @@ function barColor(status: BloodInventory["status"]) {
   return "bg-green-600"
 }
 
+function computeStatus(pct: number) {
+  if (pct < 20) return "critical" as const
+  if (pct < 40) return "low" as const
+  if (pct <= 70) return "moderate" as const
+  return "healthy" as const
+}
+
 export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
+  const existing = new Map<string, BloodInventory>(inventory.map((i) => [i.blood_type, i]))
+  const rows = ALL_BLOOD_TYPES.map((bt) => {
+    const item = existing.get(bt)
+    if (item) return item
+    return { id: `pad-${bt}`, centre_id: "", blood_type: bt as BloodType, units: 0, capacity_pct: 0, status: "healthy" as const, updated_at: "" }
+  })
   return (
     <Card>
       <CardHeader>
@@ -23,8 +38,8 @@ export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {inventory.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
+          {rows.map((item) => (
+            <div key={item.id || item.blood_type} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="w-10 shrink-0 text-sm font-bold text-black">{item.blood_type}</span>
                 <div className="h-2 w-52 rounded-full bg-gray-100">
@@ -35,7 +50,7 @@ export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{item.units} units</span>
+                <span className="w-16 text-right text-sm text-gray-600 shrink-0">{item.units} units</span>
                 <Badge
                   variant={
                     item.status === "critical"
@@ -44,6 +59,7 @@ export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
                         ? "warning"
                         : "success"
                   }
+                  className="w-16 justify-center shrink-0"
                 >
                   {item.status}
                 </Badge>

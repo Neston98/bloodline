@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
-import { computeCapacityPct, computeStatus } from "@/lib/inventory"
+import { computeCapacityPct, computeStatus, padBloodTypes } from "@/lib/inventory"
 import { AdminDashboardView } from "./admin-dashboard-view"
 import CentreRedirect from "./dashboard-redirect"
 import type { InventoryStatus, BloodInventory as BI } from "@/types"
@@ -49,10 +49,7 @@ function groupInventory(data: BI[]): InventoryItem[] {
   for (const item of data) {
     grouped[item.blood_type] = (grouped[item.blood_type] || 0) + item.units
   }
-  return Object.entries(grouped).map(([blood_type, units]) => {
-    const capacity_pct = computeCapacityPct(units, nationalMax)
-    return { blood_type, units, capacity_pct, status: computeStatus(capacity_pct) } as InventoryItem
-  })
+  return padBloodTypes(Object.entries(grouped).map(([blood_type, units]) => ({ blood_type, units })), nationalMax)
 }
 
 export default async function AdminDashboardPage({
