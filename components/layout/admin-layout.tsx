@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { cn } from "@/utils/cn"
 import { Droplets, LayoutDashboard, Users, Building, LogOut } from "lucide-react"
@@ -20,6 +21,10 @@ interface AdminLayoutProps {
 
 function AdminLayout({ currentPath, centreName, centreId, children }: AdminLayoutProps) {
   const makeHref = (href: string) => centreId ? `${href}?centre_id=${encodeURIComponent(centreId)}` : href
+
+  useEffect(() => {
+    document.documentElement.classList.remove("dark")
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-charcoal">
