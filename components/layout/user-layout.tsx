@@ -141,7 +141,7 @@ export default function UserLayout({
               <Droplets className="h-5 w-5 text-red-500" />
               <span className="text-base font-bold text-black dark:text-white">BloodLine</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
