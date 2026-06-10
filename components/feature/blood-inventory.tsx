@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { cn } from "@/utils/cn"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +11,7 @@ const ALL_BLOOD_TYPES = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
 interface BloodInventoryProps {
   inventory: BloodInventory[]
   centreName?: string
+  userBloodType?: string
 }
 
 function barColor(status: BloodInventory["status"]) {
@@ -24,21 +28,34 @@ function computeStatus(pct: number) {
   return "healthy" as const
 }
 
-export function BloodInventory({ inventory, centreName }: BloodInventoryProps) {
+export function BloodInventory({ inventory, centreName, userBloodType }: BloodInventoryProps) {
+  const [showAll, setShowAll] = useState(false)
   const existing = new Map<string, BloodInventory>(inventory.map((i) => [i.blood_type, i]))
   const rows = ALL_BLOOD_TYPES.map((bt) => {
     const item = existing.get(bt)
     if (item) return item
     return { id: `pad-${bt}`, centre_id: "", blood_type: bt as BloodType, units: 0, capacity_pct: 0, status: "healthy" as const, updated_at: "" }
   })
+  const displayed = showAll ? rows : rows.filter((r) => r.blood_type === userBloodType)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Blood Supply {centreName ? `– ${centreName}` : ""}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Blood Supply {centreName ? `– ${centreName}` : ""}</CardTitle>
+          {userBloodType && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="text-sm font-medium text-red-600 hover:text-red-700"
+            >
+              {showAll ? "Show my type only" : "See other blood types"}
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {rows.map((item) => (
+          {displayed.map((item) => (
             <div key={item.id || item.blood_type} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="w-10 shrink-0 text-sm font-bold text-black">{item.blood_type}</span>

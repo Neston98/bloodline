@@ -33,6 +33,11 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   const [showRefreshed, setShowRefreshed] = useState(false)
   const [appointments, setAppointments] = useState(initialAppts)
   const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
+  const [travelConfirmed, setTravelConfirmed] = useState(false)
+
+  useEffect(() => {
+    setAppointments(initialAppts)
+  }, [initialAppts])
 
   useEffect(() => {
     const init = async () => {
@@ -51,13 +56,17 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
 
   const fastPassWindow = (() => {
     const dates: string[] = []
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const d = new Date()
       d.setDate(d.getDate() + i)
       dates.push(d.toISOString().slice(0, 10))
     }
     return dates
   })()
+
+  useEffect(() => {
+    setTravelConfirmed(false)
+  }, [selectedCentre, selectedDate, selectedTime])
 
   const isDeferred = !!(
     selectedDate &&
@@ -96,10 +105,14 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
   const handleBook = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
+    if (!travelConfirmed) return
     setBooking(true)
     const centre = centres.find((c) => c.id === selectedCentre)
     if (!centre) return
     const [start, end] = selectedTime.split("–")
+    const declarationTs = new Date().toISOString()
+    const bookedDate = selectedDate
+    const bookedTime = selectedTime
 
     const isFast = await checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate)
 
@@ -115,14 +128,21 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
         time_end: end,
         blood_type: profile.blood_type,
         status: "scheduled",
+        travel_declaration: declarationTs,
       })
       .select("id")
       .single()
 
     if (error) { console.error("[BloodLine] book appointment insert:", error.message); setBooking(false); return }
 
+    setSelectedCentre("")
+    setSelectedDate("")
+    setSelectedTime("")
+
     if (inserted?.id) {
       await recalculateNextEligible(profile.id)
+      const { data: freshProfile } = await supabase.from("profiles").select("next_eligible").eq("id", profile.id).maybeSingle()
+      if (freshProfile?.next_eligible) setLiveNextEligible(freshProfile.next_eligible)
     }
 
     const newAppt: Appointment = {
@@ -130,7 +150,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       donor_id: profile.id,
       centre_id: selectedCentre,
       centre_name: centre.name,
-      appointment_date: selectedDate,
+      appointment_date: bookedDate,
       time_start: start,
       time_end: end,
       blood_type: profile.blood_type,
@@ -147,8 +167,8 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
           donorPhone: profile.mobile || "",
           bloodType: profile.blood_type,
           centreName: centre.name,
-          date: selectedDate,
-          time: selectedTime,
+          date: bookedDate,
+          time: bookedTime,
           appointmentId: inserted.id,
           donorId: profile.id,
         })
@@ -160,9 +180,6 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
     setIsFastPass(isFast)
     setAppointments((prev) => [newAppt, ...prev])
     setShowSuccess(true)
-    setSelectedCentre("")
-    setSelectedDate("")
-    setSelectedTime("")
     setBooking(false)
     setTimeout(() => setShowSuccess(false), 4000)
   }
@@ -176,6 +193,10 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
     }
     setAppointments((prev) => prev.map((a) => a.id === appointmentId ? { ...a, status: "cancelled" as const } : a))
     await recalculateNextEligible(profile.id)
+    const supabase2 = createClient()
+    const { data: freshProfile } = await supabase2.from("profiles").select("next_eligible").eq("id", profile.id).maybeSingle()
+    if (freshProfile?.next_eligible) setLiveNextEligible(freshProfile.next_eligible)
+    router.refresh()
   }
 
   const handleEditTime = async (id: string, timeStart: string, timeEnd: string) => {
@@ -258,8 +279,19 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
               </select>
             </div>
           </div>
+          <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={travelConfirmed}
+              onChange={(e) => setTravelConfirmed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+            />
+            <span className="text-sm text-gray-900 leading-relaxed">
+              I confirm that I have not travelled outside of Singapore in the last 14 days
+            </span>
+          </label>
           <div className="mt-4 flex flex-wrap items-center gap-4">
-            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred || booking}>
+            <Button onClick={handleBook} disabled={!selectedCentre || !selectedDate || !selectedTime || isDeferred || booking || !travelConfirmed}>
               Confirm Booking
             </Button>
             {fastPassEligible && (

@@ -48,6 +48,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
   const [fastPassEligible, setFastPassEligible] = useState(false)
   const [isFastPass, setIsFastPass] = useState(false)
   const [liveNextEligible, setLiveNextEligible] = useState(profile.next_eligible)
+  const [travelConfirmed, setTravelConfirmed] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -63,7 +64,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
 
   const fastPassWindow = (() => {
     const dates: string[] = []
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const d = new Date()
       d.setDate(d.getDate() + i)
       dates.push(d.toISOString().slice(0, 10))
@@ -86,6 +87,10 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
     }
   }, [selectedCentre, selectedDate, profile.blood_type])
 
+  useEffect(() => {
+    setTravelConfirmed(false)
+  }, [selectedCentre, selectedDate, selectedTime])
+
   const centre = centres.find((c) => c.id === selectedCentre)
   const canGoNext2 = selectedCentre && selectedDate
   const isDeferred = !!(
@@ -97,9 +102,11 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
   const handleConfirm = async () => {
     if (!selectedCentre || !selectedDate || !selectedTime) return
     if (isDeferred) return
+    if (!travelConfirmed) return
     setBooking(true)
     const supabase = createClient()
     const [start, end] = selectedTime.split("–")
+    const declarationTs = new Date().toISOString()
 
     const isFast = await checkFastPassEligibility(selectedCentre, profile.blood_type, selectedDate)
 
@@ -114,6 +121,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
         time_end: end,
         blood_type: profile.blood_type,
         status: "scheduled",
+        travel_declaration: declarationTs,
       })
       .select("id")
       .single()
@@ -122,6 +130,8 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
 
     if (inserted?.id) {
       await recalculateNextEligible(profile.id)
+      const { data: freshProfile } = await supabase.from("profiles").select("next_eligible").eq("id", profile.id).maybeSingle()
+      if (freshProfile?.next_eligible) setLiveNextEligible(freshProfile.next_eligible)
     }
 
     if (isFast && inserted?.id && centre) {
@@ -325,12 +335,23 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
                     Fast-Pass eligible — you'll skip the queue at this centre!
                   </div>
                 )}
+                <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={travelConfirmed}
+                    onChange={(e) => setTravelConfirmed(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <span className="text-sm text-gray-900 leading-relaxed">
+                    I confirm that I have not travelled outside of Singapore in the last 14 days
+                  </span>
+                </label>
                 <div className="flex justify-between pt-4">
                   <Button variant="outline" onClick={() => setStep(2)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>
-                  <Button onClick={handleConfirm} disabled={booking}>
+                  <Button onClick={handleConfirm} disabled={booking || !travelConfirmed}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     {booking ? "Booking..." : "Confirm Booking"}
                   </Button>

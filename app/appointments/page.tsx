@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { enrichInventory, padBloodTypes } from "@/lib/inventory"
+import { enrichInventory } from "@/lib/inventory"
 import { recalculateNextEligible } from "@/lib/appointment"
 import { AppointmentsView } from "./appointments-view"
 import type { Profile, Appointment, BloodCentre, BloodInventory } from "@/types"
@@ -106,8 +106,8 @@ export default async function AppointmentsPage() {
     const supabase = await createClient()
     const { data, error } = await supabase.from("blood_inventory").select("*")
     if (error) { console.error("[BloodLine] blood_inventory query:", error.message); return null }
-    return data ? padBloodTypes(enrichInventory(data as BloodInventory[])) : null
-  }, padBloodTypes(enrichInventory(MOCK_INVENTORY)), "blood_inventory")
+    return data ? enrichInventory(data as BloodInventory[]) : null
+  }, enrichInventory(MOCK_INVENTORY), "blood_inventory")
 
   return <AppointmentsView profile={profile} appointments={appointments} centres={centres} inventory={inventory} />
 }

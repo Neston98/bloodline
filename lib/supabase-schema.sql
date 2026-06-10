@@ -94,6 +94,7 @@ CREATE TABLE appointments (
   blood_type TEXT NOT NULL,
   status TEXT DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'fast_pass', 'completed', 'cancelled')),
   admin_approved BOOLEAN DEFAULT false,
+  travel_declaration TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -272,6 +273,10 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- [Migration] Add admin_approved to existing appointments table
 -- Run this separately if you already ran the original schema:
 -- ALTER TABLE appointments ADD COLUMN IF NOT EXISTS admin_approved BOOLEAN DEFAULT false;
+
+-- [Migration] Add travel_declaration to existing appointments table
+-- Run this separately if you already ran the original schema:
+-- ALTER TABLE appointments ADD COLUMN IF NOT EXISTS travel_declaration TIMESTAMPTZ;
 
 -- Seed data (run after setting up auth)
 -- Insert seed data via the Supabase dashboard SQL editor after running this

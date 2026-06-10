@@ -330,6 +330,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
       setRecords((prev) => prev.map((r) => (r.id === tempId ? { ...data, status: deriveStatus(data.cleared_date || data.return_date) } : r)))
     }
     await handleDeferralEffects(clearedDate)
+    router.refresh()
   }
 
   async function handleSave(id: string) {
@@ -352,6 +353,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
       .eq("id", id)
     if (error) console.error("[BloodLine] update travel record error:", error.message)
     await handleDeferralEffects(clearedDate)
+    router.refresh()
   }
 
   async function handleDeferralEffects(clearedDate: string) {
@@ -376,7 +378,6 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
       setCancelledMsg(`${appts.length} appointment${appts.length > 1 ? "s" : ""} cancelled due to travel deferral: ${dates}`)
       setTimeout(() => setCancelledMsg(null), 8000)
     }
-    router.refresh()
   }
 
   async function handleDelete(id: string) {

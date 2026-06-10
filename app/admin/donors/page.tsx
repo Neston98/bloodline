@@ -3,21 +3,9 @@ import { recalculateNextEligible } from "@/lib/appointment"
 import { AdminDonorsView, type DonorAppointment } from "./admin-donors-view"
 import type { BloodType } from "@/types"
 
-const FALLBACK_APPOINTMENTS: DonorAppointment[] = [
-  { id: "a1", time_start: "09:00", time_end: "09:30", donor_name: "Alex Tan", donor_initials: "AT", blood_type: "O+" as BloodType, status: "fast_pass", admin_approved: false, phone: "+65 9123 4567", email: "alex.tan@email.com", emergency_contacts: [{ name: "Sarah Tan", relation: "Spouse", phone: "+65 9876 5432" }, { name: "Mike Tan", relation: "Brother", phone: "+65 9123 1111" }] },
-  { id: "a2", time_start: "10:00", time_end: "10:30", donor_name: "Sarah Lim", donor_initials: "SL", blood_type: "A-" as BloodType, status: "scheduled", admin_approved: false, phone: "+65 9234 5678", email: "sarah.lim@email.com", emergency_contacts: [{ name: "John Lim", relation: "Brother", phone: "+65 8765 4321" }] },
-  { id: "a3", time_start: "11:00", time_end: "11:30", donor_name: "James Wong", donor_initials: "JW", blood_type: "B+" as BloodType, status: "fast_pass", admin_approved: false, phone: "+65 9345 6789", email: "james.wong@email.com", emergency_contacts: [{ name: "Lisa Wong", relation: "Spouse", phone: "+65 8654 3210" }] },
-  { id: "a4", time_start: "13:00", time_end: "13:30", donor_name: "Lisa Chen", donor_initials: "LC", blood_type: "AB+" as BloodType, status: "scheduled", admin_approved: false, phone: "+65 9456 7890", email: "lisa.chen@email.com", emergency_contacts: [{ name: "Mike Chen", relation: "Husband", phone: "+65 8543 2109" }] },
-  { id: "a5", time_start: "14:00", time_end: "14:30", donor_name: "Mike Tan", donor_initials: "MT", blood_type: "O-" as BloodType, status: "fast_pass", admin_approved: false, phone: "+65 9567 8901", email: "mike.tan@email.com", emergency_contacts: [{ name: "Rachel Tan", relation: "Sister", phone: "+65 8432 1098" }] },
-  { id: "a6", time_start: "15:00", time_end: "15:30", donor_name: "Rachel Ng", donor_initials: "RN", blood_type: "A+" as BloodType, status: "scheduled", admin_approved: false, phone: "+65 9678 9012", email: "rachel.ng@email.com", emergency_contacts: [{ name: "David Ng", relation: "Father", phone: "+65 8321 0987" }] },
-]
-
 async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fallback: T, label = "query"): Promise<T> {
   try {
     const result = await fetch()
-    if (result === null || result === undefined) {
-      console.warn(`[BloodLine] ${label}: returned null, using fallback`)
-    }
     return result ?? fallback
   } catch (e) {
     console.error(`[BloodLine] ${label}:`, e)
@@ -28,11 +16,12 @@ async function fetchOrFallback<T>(fetch: () => Promise<T | null | undefined>, fa
 export default async function AdminDonorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ centre_id?: string; date?: string }>
+  searchParams: Promise<{ centre_id?: string; date_from?: string; date_to?: string }>
 }) {
   const params = await searchParams
   const centreId = params.centre_id ?? ""
-  const dateParam = params.date ?? new Date().toISOString().slice(0, 10)
+  const dateFrom = params.date_from ?? new Date().toISOString().slice(0, 10)
+  const dateTo = params.date_to ?? dateFrom
   const today = new Date().toISOString().slice(0, 10)
 
   const supabase = createAdminClient()
@@ -55,14 +44,21 @@ export default async function AdminDonorsPage({
   }
 
   const appointments = await fetchOrFallback(async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("appointments")
-      .select("id, time_start, time_end, blood_type, status, admin_approved, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
-      .eq("appointment_date", dateParam)
+      .select("id, time_start, time_end, blood_type, status, admin_approved, travel_declaration, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
       .order("time_start", { ascending: true })
+
+    if (dateFrom === dateTo) {
+      query = query.eq("appointment_date", dateFrom)
+    } else {
+      query = query.gte("appointment_date", dateFrom).lte("appointment_date", dateTo)
+    }
+
+    const { data, error } = await query
     if (error) { console.error("[BloodLine] admin donors query:", error.message); return null }
 
-    if (!data || data.length === 0) return null
+    if (!data || data.length === 0) return []
 
     const seen = new Set<string>()
     const unique = (data as Array<Record<string, unknown>>).filter((a) => {
@@ -99,11 +95,12 @@ export default async function AdminDonorsPage({
       blood_type: a.blood_type as BloodType,
       status: (a.status === "fast_pass" ? "fast_pass" : a.status === "scheduled" ? "scheduled" : a.status === "completed" ? "completed" : "cancelled") as DonorAppointment["status"],
       admin_approved: (a.admin_approved as boolean) ?? false,
+      travel_declaration: (a.travel_declaration as string) || undefined,
       phone: (profile.mobile as string) || "",
       email: (profile.email as string) || "",
       emergency_contacts: ecMap.get(a.donor_id as string) || [{ name: "Unknown", relation: "Unknown", phone: "N/A" }],
     }})
-  }, dateParam === today ? FALLBACK_APPOINTMENTS : [], "admin donors")
+  }, [], "admin donors")
 
-  return <AdminDonorsView centreName={centreName} centreId={centreId} dateParam={dateParam} appointments={appointments} />
+  return <AdminDonorsView centreName={centreName} centreId={centreId} dateFrom={dateFrom} dateTo={dateTo} appointments={appointments} />
 }

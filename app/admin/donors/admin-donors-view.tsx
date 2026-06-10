@@ -20,6 +20,7 @@ export interface DonorAppointment {
   blood_type: BloodType
   status: "fast_pass" | "scheduled" | "completed" | "cancelled"
   admin_approved?: boolean
+  travel_declaration?: string
   phone: string
   email: string
   emergency_contacts: Array<{ name: string; relation: string; phone: string }>
@@ -28,12 +29,14 @@ export interface DonorAppointment {
 export function AdminDonorsView({
   centreName,
   centreId,
-  dateParam,
+  dateFrom,
+  dateTo,
   appointments,
 }: {
   centreName: string
   centreId: string
-  dateParam: string
+  dateFrom: string
+  dateTo: string
   appointments: DonorAppointment[]
 }) {
   const router = useRouter()
@@ -41,13 +44,22 @@ export function AdminDonorsView({
   const [selectedId, setSelectedId] = useState(appointments.find((a) => a.status !== "cancelled")?.id || appointments[0]?.id || "")
   const [appts, setAppts] = useState(appointments.filter((a) => a.status !== "cancelled"))
   const [completingId, setCompletingId] = useState<string | null>(null)
+  const [travelDeclText, setTravelDeclText] = useState("")
   const selected = appts.find((a) => a.id === selectedId) ?? appts[0]
 
   useEffect(() => {
     const filtered = appointments.filter((a) => a.status !== "cancelled")
     setAppts(filtered)
     setSelectedId(filtered.find((a) => a.status !== "cancelled")?.id || filtered[0]?.id || "")
-  }, [dateParam, appointments])
+  }, [dateFrom, dateTo, appointments])
+
+  useEffect(() => {
+    if (selected?.travel_declaration) {
+      setTravelDeclText(new Date(selected.travel_declaration).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))
+    } else {
+      setTravelDeclText("")
+    }
+  }, [selected])
 
   async function handleMarkCompleted(apt: DonorAppointment) {
     setCompletingId(apt.id)
@@ -90,12 +102,23 @@ export function AdminDonorsView({
             </div>
           )}
           <DatePicker
-            value={dateParam}
-            onChange={(d) => router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}&date=${d}`)}
+            value={dateFrom}
+            onChange={(d) => router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}&date_from=${d}&date_to=${dateTo}`)}
             inputCls="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
             direction="down"
             align="right"
             calendarWidth={240}
+            placeholder="From date"
+          />
+          <span className="text-sm text-gray-500">–</span>
+          <DatePicker
+            value={dateTo}
+            onChange={(d) => router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}&date_from=${dateFrom}&date_to=${d}`)}
+            inputCls="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            direction="down"
+            align="right"
+            calendarWidth={240}
+            placeholder="To date"
           />
         </div>
       </div>
@@ -103,7 +126,11 @@ export function AdminDonorsView({
       {appts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-gray-900">No appointments scheduled for today.</p>
+            <p className="text-gray-900">
+              {dateFrom === dateTo
+                ? "No appointments scheduled for this date."
+                : "No appointments scheduled for this date range."}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -111,7 +138,7 @@ export function AdminDonorsView({
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>{"Today's Appointments"}</CardTitle>
+                <CardTitle>{dateFrom === dateTo ? "Appointments" : `Appointments (${dateFrom} – ${dateTo})`}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -205,6 +232,19 @@ export function AdminDonorsView({
                         <p className="text-sm font-medium text-black">Today, {selected.time_start} – {selected.time_end}</p>
                       </div>
                     </div>
+                    {selected.travel_declaration && (
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-green-100 flex items-center justify-center">
+                          <span className="text-[8px] text-green-700 font-bold">✓</span>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-900">Travel Declaration</p>
+                          <p className="text-sm font-medium text-green-700">
+                            Confirmed {travelDeclText}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {(selected.status === "scheduled" || selected.status === "fast_pass") && (

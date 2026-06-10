@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { PageHeader } from "@/components/feature/page-header"
@@ -34,6 +34,10 @@ export function DashboardView({
   const [selectedCentreId, setSelectedCentreId] = useState(centres[0]?.id || "")
   const [showRefreshed, setShowRefreshed] = useState(false)
   const [liveAppts, setLiveAppts] = useState(appointments)
+
+  useEffect(() => {
+    setLiveAppts(appointments)
+  }, [appointments])
 
   const handleEditTime = async (id: string, timeStart: string, timeEnd: string) => {
     const supabase = createClient()
@@ -122,7 +126,7 @@ export function DashboardView({
               ))}
             </select>
           </div>
-          <BloodInventory inventory={filteredInventory} centreName={selectedCentre?.name} />
+          <BloodInventory inventory={filteredInventory} centreName={selectedCentre?.name} userBloodType={profile.blood_type} />
         </div>
 
         <div className="space-y-4">
