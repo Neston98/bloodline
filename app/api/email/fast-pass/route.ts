@@ -1,16 +1,30 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createTransporter } from "@/lib/email"
+import { logger } from "@/lib/logger"
 import QRCode from "qrcode"
 
 export async function POST(request: NextRequest) {
-  const { email, donorName, donorNric, donorPhone, bloodType, centreName, date, time, appointmentId, donorId } = await request.json()
+  const body = await request.json()
+  const { email, donorName, donorNric, donorPhone, bloodType, centreName, date, time, appointmentId, donorId } = body
+
+  logger.info("api/fast-pass", "request received", {
+    email,
+    donorName,
+    bloodType,
+    centreName,
+    date,
+    time,
+    appointmentId,
+    donorId,
+  })
 
   if (!email || !appointmentId || !donorId) {
+    logger.warn("api/fast-pass", "missing required fields", { hasEmail: !!email, hasAppointmentId: !!appointmentId, hasDonorId: !!donorId })
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
   try {
-    const payload = JSON.stringify({
+    const qrPayload = JSON.stringify({
       type: "fast_pass",
       appointmentId,
       donorId,
@@ -22,7 +36,8 @@ export async function POST(request: NextRequest) {
       issuedAt: Date.now(),
     })
 
-    const qrBuffer = await QRCode.toBuffer(payload, { width: 300, margin: 2 })
+    const qrBuffer = await QRCode.toBuffer(qrPayload, { width: 300, margin: 2 })
+    logger.info("api/fast-pass", "QR code generated", { size: qrBuffer.length })
 
     const transporter = createTransporter()
     const emailFrom = process.env.EMAIL_FROM || "BloodLine <donotreply@bloodline.app>"
@@ -65,9 +80,10 @@ export async function POST(request: NextRequest) {
       `,
     })
 
+    logger.info("api/fast-pass", "email sent successfully", { email })
     return NextResponse.json({ success: true })
   } catch (e) {
-    console.error("[FastPass email] Error:", e)
+    logger.error("api/fast-pass", "failed to send email", e, { email, appointmentId })
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
   }
 }

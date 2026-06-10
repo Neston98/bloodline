@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { computeCapacityPct, computeStatus } from "@/lib/inventory"
+import { logger } from "@/lib/logger"
 
 export async function checkFastPassEligibility(
   centreId: string,
@@ -13,7 +14,7 @@ export async function checkFastPassEligibility(
   const diffDays = Math.round((appt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0 || diffDays > 3) {
-    console.log(`[FastPass] date ${appointmentDate} is ${diffDays} days away — outside 3-day window`)
+    logger.info("fast-pass", "outside 3-day window", { centreId, bloodType, appointmentDate, diffDays })
     return false
   }
 
@@ -26,16 +27,20 @@ export async function checkFastPassEligibility(
     .maybeSingle()
 
   if (error) {
-    console.warn("[FastPass] inventory check error:", error.message)
+    logger.warn("fast-pass", "inventory check error", { centreId, bloodType, error: error.message })
     return false
   }
 
-  if (!data) return false
+  if (!data) {
+    logger.warn("fast-pass", "no inventory data found", { centreId, bloodType })
+    return false
+  }
 
   const pct = computeCapacityPct(data.units)
   const status = computeStatus(pct)
   const eligible = status === "critical" || status === "low"
-  console.log(`[FastPass] centre=${centreId} type=${bloodType} units=${data.units} pct=${pct} status=${status} eligible=${eligible}`)
+
+  logger.info("fast-pass", "eligibility result", { centreId, bloodType, units: data.units, pct, status, eligible })
   return eligible
 }
 
@@ -51,7 +56,7 @@ export async function sendFastPassEmail(params: {
   appointmentId: string
   donorId: string
 }) {
-  console.log("[FastPass] Sending email to", params.email)
+  logger.info("fast-pass", "sending email", { email: params.email, donorName: params.donorName })
   const res = await fetch("/api/email/fast-pass", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,10 +64,10 @@ export async function sendFastPassEmail(params: {
   })
   if (!res.ok) {
     const text = await res.text()
-    console.error("[FastPass] Email API error:", res.status, text)
+    logger.error("fast-pass", "email API failed", { status: res.status, body: text })
     throw new Error(`Email API returned ${res.status}: ${text}`)
   }
-  console.log("[FastPass] Email sent successfully")
+  logger.info("fast-pass", "email sent successfully", { email: params.email })
 }
 
 export async function recalculateNextEligible(donorId: string, supabase?: any): Promise<string> {
@@ -76,7 +81,9 @@ export async function recalculateNextEligible(donorId: string, supabase?: any): 
     .select("appointment_date")
     .eq("donor_id", donorId)
     .in("status", ["scheduled", "fast_pass", "completed"])
-  if (apptErr) console.warn("[BloodLine] recalculate appts error:", apptErr.message)
+  if (apptErr) {
+    logger.warn("recalculate", "fetch appointments error", { donorId, error: apptErr.message })
+  }
 
   if (appts) {
     for (const a of appts) {
@@ -91,7 +98,9 @@ export async function recalculateNextEligible(donorId: string, supabase?: any): 
     .select("cleared_date")
     .eq("donor_id", donorId)
     .eq("status", "pending")
-  if (travelErr) console.warn("[BloodLine] recalculate travel error:", travelErr.message)
+  if (travelErr) {
+    logger.warn("recalculate", "fetch travel error", { donorId, error: travelErr.message })
+  }
 
   if (travel) {
     for (const t of travel) {
@@ -104,6 +113,11 @@ export async function recalculateNextEligible(donorId: string, supabase?: any): 
   const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())))
   const nextEligible = maxDate.toISOString().slice(0, 10)
 
-  await client.from("profiles").update({ next_eligible: nextEligible }).eq("id", donorId)
+  const { error: updateErr } = await client.from("profiles").update({ next_eligible: nextEligible }).eq("id", donorId)
+  if (updateErr) {
+    logger.error("recalculate", "failed to update next_eligible", updateErr, { donorId, nextEligible })
+  }
+
+  logger.info("recalculate", "completed", { donorId, nextEligible, appointmentDates: appts?.length ?? 0, travelRecords: travel?.length ?? 0 })
   return nextEligible
 }
