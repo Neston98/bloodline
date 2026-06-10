@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
-import { CheckCircle2, Copy, X } from "lucide-react"
+import { CheckCircle2, Copy, X, AlertCircle } from "lucide-react"
 import type { Voucher } from "@/types"
 
 interface VoucherListProps {
@@ -82,39 +82,79 @@ function Toast({ text, onClose }: { text: string; onClose: () => void }) {
   )
 }
 
+function ErrorToast({ text, onClose }: { text: string; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000)
+    return () => clearTimeout(timer)
+  }, [onClose])
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 shadow-lg dark:border-red-800 dark:bg-red-900/30">
+      <AlertCircle className="h-5 w-5 text-red-600" />
+      <span className="text-sm font-medium text-red-800 dark:text-red-300">{text}</span>
+      <button onClick={onClose} className="ml-2 text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
 export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
-  const [mounted, setMounted] = useState(false)
+  const [isAuth, setIsAuth] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[]>([])
-  const [localSpent, setLocalSpent] = useState<number>(0)
+  const [sessionDeductions, setSessionDeductions] = useState(0)
+  const [localSpent, setLocalSpent] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const [errorToast, setErrorToast] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
-    const savedRedeem = localStorage.getItem("voucher-redemptions")
-    if (savedRedeem) setRedemptions(JSON.parse(savedRedeem))
-    const savedSpent = localStorage.getItem("voucher-local-spent")
-    if (savedSpent) setLocalSpent(parseInt(savedSpent, 10))
-    setMounted(true)
+    async function init() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        setIsAuth(true)
+        const { data } = await supabase
+          .from("reward_redemptions")
+          .select("*")
+          .eq("donor_id", user.id)
+          .order("redeemed_at", { ascending: false })
+
+        if (data) {
+          const mapped: Redemption[] = data.map((r) => ({
+            id: r.id,
+            voucherName: r.voucher_name,
+            code: r.id.slice(0, 13),
+            pointsCost: r.points_spent,
+            redeemedAt: new Date(r.redeemed_at).toLocaleString("en-SG", {
+              day: "numeric", month: "short", year: "numeric",
+              hour: "2-digit", minute: "2-digit",
+            }),
+          }))
+          setRedemptions(mapped)
+        }
+      } else {
+        const savedRedeem = localStorage.getItem("voucher-redemptions")
+        if (savedRedeem) {
+          const parsed: Redemption[] = JSON.parse(savedRedeem)
+          setRedemptions(parsed)
+          const totalSpent = parsed.reduce((sum, r) => sum + r.pointsCost, 0)
+          setLocalSpent(totalSpent)
+        }
+      }
+
+      localStorage.removeItem("voucher-mock-points")
+      setLoading(false)
+    }
+    init()
   }, [])
 
-  const hasMountedRef = useRef(false)
-
-  useEffect(() => {
-    if (hasMountedRef.current) {
-      localStorage.setItem("voucher-redemptions", JSON.stringify(redemptions))
-    }
-  }, [redemptions])
-
-  useEffect(() => {
-    if (hasMountedRef.current) {
-      localStorage.setItem("voucher-local-spent", String(localSpent))
-    } else {
-      hasMountedRef.current = true
-    }
-  }, [localSpent])
-
-  const effectivePoints = mounted ? userPoints - localSpent : userPoints
+  const effectivePoints = isAuth
+    ? userPoints - sessionDeductions
+    : userPoints - localSpent
 
   async function handleRedeem(voucher: Voucher) {
     setRedeemingId(voucher.id)
@@ -124,74 +164,66 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
       voucher.name.includes("HSA") ? "HSA" :
       voucher.name.includes("GrabPay") ? "GP" : "GF"
 
-    let succeeded = false
+    const supabase = createClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    try {
-      const supabase = createClient()
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (user && !userError) {
+      const res = await fetch("/api/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          donorId: user.id,
+          voucherId: voucher.id,
+          voucherName: voucher.name,
+          pointsCost: voucher.points_cost,
+        }),
+      })
 
-      if (!userError && user) {
-        const { error: redemptionError } = await supabase
-          .from("reward_redemptions")
-          .insert({
-            donor_id: user.id,
-            voucher_id: voucher.id,
-            voucher_name: voucher.name,
-            points_spent: voucher.points_cost,
-          })
-
-        if (redemptionError) throw redemptionError
-
-        const { error: pointsError } = await supabase.rpc("deduct_points", {
-          p_donor_id: user.id,
-          p_points: voucher.points_cost,
-        })
-
-        if (pointsError) {
-          const isRpcMissing = pointsError.message?.includes("function") || pointsError.message?.includes("not found")
-          if (isRpcMissing) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("points")
-              .eq("id", user.id)
-              .single()
-
-            if (profile) {
-              const { error: updateError } = await supabase
-                .from("profiles")
-                .update({ points: Math.max(profile.points - voucher.points_cost, 0) })
-                .eq("id", user.id)
-
-              if (updateError) throw updateError
-            }
-          } else {
-            throw pointsError
-          }
-        }
-
-        succeeded = true
+      if (!res.ok) {
+        const { error } = await res.json()
+        setErrorToast(`Redemption failed: ${error}`)
+        setRedeemingId(null)
+        return
       }
-    } catch {
-      // Supabase unavailable — use mock fallback
+
+      setSessionDeductions((p) => p + voucher.points_cost)
+
+      const code = generateCode(prefix)
+      const redemption: Redemption = {
+        id: `${voucher.id}-${Date.now()}`,
+        voucherName: voucher.name,
+        code,
+        pointsCost: voucher.points_cost,
+        redeemedAt: new Date().toLocaleString("en-SG", {
+          day: "numeric", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        }),
+      }
+
+      setRedemptions((prev) => [redemption, ...prev])
+      setToast(`Redeemed ${voucher.name} — Code: ${code}`)
+      setRedeemingId(null)
+    } else {
+      const savedRedeem = localStorage.getItem("voucher-redemptions")
+      const existing = savedRedeem ? JSON.parse(savedRedeem) : []
+      const code = generateCode(prefix)
+      const redemption: Redemption = {
+        id: `${voucher.id}-${Date.now()}`,
+        voucherName: voucher.name,
+        code,
+        pointsCost: voucher.points_cost,
+        redeemedAt: new Date().toLocaleString("en-SG", {
+          day: "numeric", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        }),
+      }
+      const updated = [redemption, ...existing]
+      localStorage.setItem("voucher-redemptions", JSON.stringify(updated))
+      setLocalSpent((p) => p + voucher.points_cost)
+      setRedemptions(updated)
+      setToast(`Redeemed ${voucher.name} — Code: ${code}`)
+      setRedeemingId(null)
     }
-
-    setLocalSpent((p) => p + voucher.points_cost)
-
-    const code = generateCode(prefix)
-    const redemption: Redemption = {
-      id: `${voucher.id}-${Date.now()}`,
-      voucherName: voucher.name,
-      code,
-      pointsCost: voucher.points_cost,
-      redeemedAt: new Date().toLocaleString("en-SG", {
-        day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-      }),
-    }
-
-    setRedemptions((prev) => [redemption, ...prev])
-    setToast(`Redeemed ${voucher.name} — Code: ${code}`)
-    setRedeemingId(null)
   }
 
   function copyCode(code: string, id: string) {
@@ -203,6 +235,7 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
   return (
     <div className="space-y-6">
       {toast && <Toast text={toast} onClose={() => setToast(null)} />}
+      {errorToast && <ErrorToast text={errorToast} onClose={() => setErrorToast(null)} />}
 
       <Card>
         <CardHeader>
@@ -217,7 +250,7 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
         <CardContent>
           <div className="space-y-3">
             {vouchers.map((voucher) => (
-              <div key={voucher.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+              <div key={voucher.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-transparent">
                 <div className="flex items-center gap-3">
                   <LogoImage name={voucher.name} />
                   <div>

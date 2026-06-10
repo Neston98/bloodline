@@ -69,9 +69,8 @@ export function DashboardView({
     if (!date) return "Today"
     const d = new Date(date)
     if (isNaN(d.getTime())) return "Today"
-    return d.toLocaleDateString("en-SG", {
-      day: "numeric", month: "short", year: "numeric",
-    })
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
   }
 
   function getGreeting() {

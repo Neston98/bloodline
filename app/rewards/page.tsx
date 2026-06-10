@@ -175,7 +175,7 @@ export default async function RewardsPage() {
       </Card>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-transparent dark:bg-gray-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
               <Droplets className="h-5 w-5" />
@@ -186,7 +186,7 @@ export default async function RewardsPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-transparent dark:bg-gray-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               <Gift className="h-5 w-5" />
@@ -197,7 +197,7 @@ export default async function RewardsPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-transparent dark:bg-gray-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
               <Star className="h-5 w-5" />
@@ -208,7 +208,7 @@ export default async function RewardsPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-transparent dark:bg-gray-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
               <TrendingUp className="h-5 w-5" />
