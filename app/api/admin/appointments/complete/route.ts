@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   const { data: appt, error: fetchError } = await supabase
     .from("appointments")
-    .select("donor_id, status")
+    .select("donor_id, centre_id, blood_type, status")
     .eq("id", id)
     .single()
 
@@ -50,8 +50,23 @@ export async function POST(request: Request) {
     })
     .eq("id", appt.donor_id)
 
+  const { data: inv, error: invFetchError } = await supabase
+    .from("blood_inventory")
+    .select("id, units")
+    .eq("centre_id", appt.centre_id)
+    .eq("blood_type", appt.blood_type)
+    .maybeSingle()
+
+  if (inv && !invFetchError) {
+    const newUnits = (inv.units || 0) + 1
+    const capacity_pct = Math.round((newUnits / 800) * 100)
+    const status = capacity_pct < 20 ? "critical" : capacity_pct < 40 ? "low" : "good"
+    await supabase.from("blood_inventory").update({ units: newUnits, capacity_pct, status, updated_at: new Date().toISOString() }).eq("id", inv.id)
+  }
+
   return NextResponse.json({
     success: true,
     points_awarded: pointsError ? false : true,
+    inventory_updated: !(invFetchError),
   })
 }

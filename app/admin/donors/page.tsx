@@ -46,7 +46,7 @@ export default async function AdminDonorsPage({
   const appointments = await fetchOrFallback(async () => {
     let query = supabase
       .from("appointments")
-      .select("id, time_start, time_end, blood_type, status, admin_approved, travel_declaration, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
+      .select("id, appointment_date, time_start, time_end, blood_type, status, admin_approved, travel_declaration, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
       .order("time_start", { ascending: true })
 
     if (dateFrom === dateTo) {
@@ -88,6 +88,7 @@ export default async function AdminDonorsPage({
       const profile = (a.profiles as Record<string, unknown>) || {}
       return {
       id: a.id as string,
+      appointment_date: a.appointment_date as string,
       time_start: a.time_start as string,
       time_end: a.time_end as string,
       donor_name: (profile.full_name as string) || "Unknown",

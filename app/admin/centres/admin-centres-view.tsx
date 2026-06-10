@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/utils/cn"
-import { MapPin, Plus, Minus, Save, Building } from "lucide-react"
+import { MapPin, Plus, Minus, Save, Building, Pencil, X } from "lucide-react"
 import type { InventoryStatus } from "@/types"
 
 interface CentreInventoryItem {
@@ -40,6 +40,7 @@ export function AdminCentresView({
   const [inventory, setInventory] = useState(inventoryItems)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
@@ -90,10 +91,25 @@ export function AdminCentresView({
             Last Updated: {lastUpdated || "Loading..."}
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {editing ? (
+            <>
+              <Button variant="outline" onClick={() => { setEditing(false); setInventory(inventoryItems) }}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                <Save className="mr-2 h-4 w-4" />
+                {saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card className="mb-6">
@@ -159,19 +175,23 @@ export function AdminCentresView({
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <button
-                  onClick={() => adjustUnits(idx, -1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
+                {editing ? (
+                  <button
+                    onClick={() => adjustUnits(idx, -1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                ) : <div className="w-8" />}
                 <span className="text-lg font-bold text-black">{item.units}</span>
-                <button
-                  onClick={() => adjustUnits(idx, 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-600"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+                {editing ? (
+                  <button
+                    onClick={() => adjustUnits(idx, 1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:border-green-200 hover:bg-green-50 hover:text-green-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                ) : <div className="w-8" />}
               </div>
             </CardContent>
           </Card>

@@ -13,6 +13,7 @@ import type { BloodType } from "@/types"
 
 export interface DonorAppointment {
   id: string
+  appointment_date: string
   time_start: string
   time_end: string
   donor_name: string
@@ -89,11 +90,10 @@ export function AdminDonorsView({
           <p className="mt-1 text-sm text-gray-900">{centreName}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm text-gray-900">{new Date().toLocaleDateString("en-SG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-          <span className="text-sm font-medium text-gray-900">{appts.length} appointments at this centre</span>
-          <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
+          <span className="text-sm font-medium text-gray-900">{appts.length} appointment{appts.length !== 1 ? "s" : ""}{dateFrom === dateTo ? ` for ${dateFrom}` : ` for ${dateFrom} – ${dateTo}`}</span>
+          <button type="button" onClick={() => { setShowRefreshed(true); router.push(`/admin/donors?centre_id=${encodeURIComponent(centreId)}`); setTimeout(() => setShowRefreshed(false), 3000) }}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            title="Refresh donors">
+            title="Show today">
             <RefreshCw className="h-4 w-4" />
           </button>
           {showRefreshed && (
@@ -138,7 +138,7 @@ export function AdminDonorsView({
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>{dateFrom === dateTo ? "Appointments" : `Appointments (${dateFrom} – ${dateTo})`}</CardTitle>
+                <CardTitle>{dateFrom === dateTo ? `Appointments – ${dateFrom}` : `Appointments – ${dateFrom} to ${dateTo}`}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -154,7 +154,7 @@ export function AdminDonorsView({
                       )}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-900">{apt.time_start} – {apt.time_end}</p>
+                        <p className="text-xs text-gray-900">{apt.appointment_date}, {apt.time_start} – {apt.time_end}</p>
                         <p className={cn("text-sm font-medium", selectedId === apt.id ? "text-red-700" : "text-black")}>
                           {apt.donor_name}
                         </p>
@@ -229,7 +229,7 @@ export function AdminDonorsView({
                       <Clock className="h-4 w-4 text-gray-600" />
                       <div>
                         <p className="text-xs text-gray-900">Appointment</p>
-                        <p className="text-sm font-medium text-black">Today, {selected.time_start} – {selected.time_end}</p>
+                        <p className="text-sm font-medium text-black">{selected.appointment_date}, {selected.time_start} – {selected.time_end}</p>
                       </div>
                     </div>
                     {selected.travel_declaration && (
