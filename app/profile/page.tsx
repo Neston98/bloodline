@@ -66,11 +66,11 @@ export default async function ProfilePage() {
   return (
     <UserLayout currentPath="/profile" profile={profile}>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-black">My Profile</h1>
-        <p className="mt-1 text-sm text-gray-900">Manage your personal information and donor details</p>
+        <h1 className="text-2xl font-bold text-black dark:text-gray-100">My Profile</h1>
+        <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">Manage your personal information and donor details</p>
       </div>
 
-      <div className="mb-6 overflow-hidden rounded-xl border bg-white shadow-sm">
+      <div className="mb-6 overflow-hidden rounded-xl border bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="p-6" style={{ background: "linear-gradient(to right, #991b1b, #7f1d1d)" }}>
           <div className="flex items-center gap-5">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white">
@@ -111,26 +111,26 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Droplets className="h-4 w-4 text-red-500" />
                 Blood Type
               </div>
-              <span className="text-sm font-semibold text-black">{profile.blood_type}</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">{profile.blood_type}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Weight className="h-4 w-4" />
                 Weight
               </div>
-              <span className="text-sm font-semibold text-black">{profile.weight_kg} kg</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">{profile.weight_kg} kg</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Heart className="h-4 w-4 text-red-500" />
                 Last Hb Reading
               </div>
-              <span className="text-sm font-semibold text-black">
+              <span className="text-sm font-semibold text-black dark:text-gray-100">
                 {profile.last_hb} {profile.last_hb_meta}
               </span>
             </div>
@@ -145,33 +145,33 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">Total Donations</span>
-              <span className="text-sm font-semibold text-black">{profile.donations_count}</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Total Donations</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">{profile.donations_count}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">First Donation</span>
-              <span className="text-sm font-semibold text-black">15 Jan 2022</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">First Donation</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">15 Jan 2022</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">Last Donation</span>
-              <span className="text-sm font-semibold text-black">15 Mar 2025</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Last Donation</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">15 Mar 2025</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">Next Eligible</span>
-              <span className="text-sm font-semibold text-black">{formatDate(profile.next_eligible)}</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Next Eligible</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">{formatDate(profile.next_eligible)}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">Points</span>
-              <span className="text-sm font-semibold text-black">{profile.points}</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Points</span>
+              <span className="text-sm font-semibold text-black dark:text-gray-100">{profile.points}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-              <span className="text-sm text-gray-600">Current Tier</span>
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Current Tier</span>
               <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold" style={{ backgroundColor: getTierBg(displayTier), color: getTierColor(displayTier), border: `2px solid ${getTierColor(displayTier)}` }}>{displayTier}</span>
             </div>
             <a
               href="/rewards"
-              className="mt-2 flex items-center justify-between rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+              className="mt-2 flex items-center justify-between rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
             >
               <span>View Rewards & Redemption</span>
               <ChevronRight className="h-4 w-4" />
@@ -197,12 +197,12 @@ function formatDate(date: string | null | undefined) {
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-900">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-300">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-900">{label}</p>
-        <p className="text-sm font-medium text-black truncate">{value}</p>
+        <p className="text-xs text-gray-900 dark:text-gray-300">{label}</p>
+        <p className="text-sm font-medium text-black dark:text-gray-100 truncate">{value}</p>
       </div>
     </div>
   )

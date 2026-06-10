@@ -211,11 +211,11 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       <div className="relative mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-black">Appointments</h1>
-            <p className="mt-1 text-sm text-gray-900">Manage and schedule your blood donation appointments</p>
+            <h1 className="text-2xl font-bold text-black dark:text-gray-100">Appointments</h1>
+            <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">Manage and schedule your blood donation appointments</p>
           </div>
           <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors"
             title="Refresh appointments">
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -236,20 +236,20 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-900">Blood Centre</label>
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">Blood Centre</label>
               <select
                 value={selectedCentre}
                 onChange={(e) => setSelectedCentre(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
-                <option value="" className="text-black">Select a centre</option>
+                <option value="" className="text-black dark:text-gray-100">Select a centre</option>
                 {centres.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-900">Date</label>
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">Date</label>
               <DatePicker
                 value={selectedDate}
                 onChange={setSelectedDate}
@@ -257,36 +257,36 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
                 direction="down"
                 highlightDates={fastPassWindow}
                 placeholder="Select donation date"
-                inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
               {isDeferred && (
-                <p className="mt-1 text-xs text-red-600">
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                   You are deferred from donating until {liveNextEligible}. Please select a date on or after this date.
                 </p>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-900">Time Slot</label>
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">Time Slot</label>
               <select
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               >
-                <option value="" className="text-black">Select time</option>
+                <option value="" className="text-black dark:text-gray-100">Select time</option>
                 {TIME_SLOTS.map((slot) => (
                   <option key={slot} value={slot}>{slot}</option>
                 ))}
               </select>
             </div>
           </div>
-          <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer">
+          <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer dark:border-gray-700 dark:bg-gray-800">
             <input
               type="checkbox"
               checked={travelConfirmed}
               onChange={(e) => setTravelConfirmed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 dark:border-gray-600"
             />
-            <span className="text-sm text-gray-900 leading-relaxed">
+            <span className="text-sm text-gray-900 dark:text-gray-300 leading-relaxed">
               I confirm that I have not travelled outside of Singapore in the last 14 days
             </span>
           </label>
@@ -295,13 +295,13 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
               Confirm Booking
             </Button>
             {fastPassEligible && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-700">
                 <Zap className="h-3.5 w-3.5" />
                 Fast-Pass available
               </span>
             )}
             {showSuccess && (
-              <div className="flex items-center gap-2 text-sm text-green-700">
+              <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                 <CheckCircle2 className="h-4 w-4" />
                 {isFastPass ? "Fast-Pass issued! Check your email for the QR code." : "Appointment booked successfully!"}
               </div>
@@ -311,7 +311,7 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
       </Card>
 
       <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-black">Upcoming Appointments</h2>
+        <h2 className="mb-4 text-lg font-semibold text-black dark:text-gray-100">Upcoming Appointments</h2>
         {upcoming.length > 0 ? (
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {upcoming.map((apt) => (
@@ -319,12 +319,12 @@ export function AppointmentsView({ profile, appointments: initialAppts, centres,
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-900">No upcoming appointments. Schedule one above!</p>
+          <p className="text-sm text-gray-900 dark:text-gray-300">No upcoming appointments. Schedule one above!</p>
         )}
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-black">Past Appointments</h2>
+        <h2 className="mb-4 text-lg font-semibold text-black dark:text-gray-100">Past Appointments</h2>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           {past.slice(0, 8).map((apt) => (
             <AppointmentCard key={apt.id} appointment={apt} />

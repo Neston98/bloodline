@@ -7,8 +7,8 @@ interface MilestoneListProps {
 
 function badgeBg(earned: boolean) {
   return earned
-    ? "bg-gray-50 ring-1 ring-gray-200"
-    : "bg-gray-100 ring-1 ring-gray-200 opacity-50"
+    ? "bg-gray-50 ring-1 ring-gray-200 dark:bg-gray-700/50 dark:ring-gray-600"
+    : "bg-gray-100 ring-1 ring-gray-200 opacity-50 dark:bg-gray-800 dark:ring-gray-700"
 }
 
 function badgeIcon(earned: boolean) {
@@ -28,15 +28,15 @@ export function MilestoneList({ donorMilestones }: MilestoneListProps) {
               key={dm.id}
               className={`flex flex-col items-center gap-2 rounded-xl p-4 text-center transition-all ${badgeBg(dm.earned)}`}
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/60 ring-1 ring-white/80 shadow-inner">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/60 ring-1 ring-white/80 shadow-inner dark:bg-gray-800/60 dark:ring-gray-600">
                 <span className={badgeIcon(dm.earned)}>{dm.milestone?.icon}</span>
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-800">{dm.milestone?.name}</p>
-                <p className="mt-0.5 text-[10px] leading-tight text-gray-600">{dm.milestone?.condition}</p>
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{dm.milestone?.name}</p>
+                <p className="mt-0.5 text-[10px] leading-tight text-gray-600 dark:text-gray-400">{dm.milestone?.condition}</p>
               </div>
               {dm.earned && dm.earned_at && (
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
                   {new Date(dm.earned_at).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
               )}

@@ -52,14 +52,14 @@ function LogoImage({ name }: { name: string }) {
       name.includes("CDC") ? "CD" :
       name.includes("HSA") || name.includes("Health") ? "HS" : "NT"
     return (
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-200 text-xs font-bold text-gray-600">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-200 text-xs font-bold text-gray-600 dark:bg-gray-700 dark:text-gray-400">
         {initials}
       </div>
     )
   }
 
   return (
-    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
+    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-gray-200 dark:bg-gray-700 dark:ring-gray-600">
       <img src={url} alt="" className="h-7 w-7 object-contain" onError={() => setErrored(true)} />
     </div>
   )
@@ -72,10 +72,10 @@ function Toast({ text, onClose }: { text: string; onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-3 shadow-lg">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-3 shadow-lg dark:border-green-800 dark:bg-green-900/30">
       <CheckCircle2 className="h-5 w-5 text-green-600" />
-      <span className="text-sm font-medium text-green-800">{text}</span>
-      <button onClick={onClose} className="ml-2 text-green-400 hover:text-green-600">
+      <span className="text-sm font-medium text-green-800 dark:text-green-300">{text}</span>
+      <button onClick={onClose} className="ml-2 text-green-400 hover:text-green-600 dark:text-green-500 dark:hover:text-green-300">
         <X className="h-4 w-4" />
       </button>
     </div>
@@ -208,21 +208,21 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Redeem Vouchers</CardTitle>
-            <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5">
-              <span className="text-xs text-amber-700">Balance:</span>
-              <span className="text-sm font-bold text-amber-800">{effectivePoints} pts</span>
+            <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 dark:bg-amber-900/30">
+              <span className="text-xs text-amber-700 dark:text-amber-400">Balance:</span>
+              <span className="text-sm font-bold text-amber-800 dark:text-amber-300">{effectivePoints} pts</span>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {vouchers.map((voucher) => (
-              <div key={voucher.id} className="flex items-center justify-between rounded-lg border p-3">
+              <div key={voucher.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                 <div className="flex items-center gap-3">
                   <LogoImage name={voucher.name} />
                   <div>
-                    <p className="text-sm font-medium text-black">{voucher.name}</p>
-                    <p className="text-xs text-gray-900">{voucher.description}</p>
+                    <p className="text-sm font-medium text-black dark:text-gray-100">{voucher.name}</p>
+                    <p className="text-xs text-gray-900 dark:text-gray-300">{voucher.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -256,18 +256,18 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
           <CardContent>
             <div className="space-y-2">
               {redemptions.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-lg border border-green-100 bg-green-50/50 p-3">
+                <div key={r.id} className="flex items-center justify-between rounded-lg border border-green-100 bg-green-50/50 p-3 dark:border-green-800 dark:bg-green-900/20">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <LogoImage name={r.voucherName} />
                     <div>
-                      <p className="text-sm font-medium text-black">{r.voucherName}</p>
+                      <p className="text-sm font-medium text-black dark:text-gray-100">{r.voucherName}</p>
                       <div className="mt-1 flex items-center gap-2">
-                        <code className="rounded bg-white px-2 py-0.5 text-xs font-mono text-green-700 ring-1 ring-green-200">
+                        <code className="rounded bg-white px-2 py-0.5 text-xs font-mono text-green-700 ring-1 ring-green-200 dark:bg-gray-800 dark:text-green-300 dark:ring-green-700">
                           {r.code}
                         </code>
                         <button
                           onClick={() => copyCode(r.code, r.id)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                           title="Copy code"
                         >
                           {copiedId === r.id ? (
@@ -277,7 +277,7 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
                           )}
                         </button>
                       </div>
-                      <p className="mt-0.5 text-xs text-gray-500">{r.redeemedAt}</p>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{r.redeemedAt}</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="ml-3 shrink-0">-{r.pointsCost} pts</Badge>

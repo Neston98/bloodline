@@ -21,13 +21,6 @@ function barColor(status: BloodInventory["status"]) {
   return "bg-green-600"
 }
 
-function computeStatus(pct: number) {
-  if (pct < 20) return "critical" as const
-  if (pct < 40) return "low" as const
-  if (pct <= 70) return "moderate" as const
-  return "healthy" as const
-}
-
 export function BloodInventory({ inventory, centreName, userBloodType }: BloodInventoryProps) {
   const [showAll, setShowAll] = useState(false)
   const existing = new Map<string, BloodInventory>(inventory.map((i) => [i.blood_type, i]))
@@ -46,7 +39,7 @@ export function BloodInventory({ inventory, centreName, userBloodType }: BloodIn
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="text-sm font-medium text-red-600 hover:text-red-700"
+              className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               {showAll ? "Show my type only" : "See other blood types"}
             </button>
@@ -57,15 +50,15 @@ export function BloodInventory({ inventory, centreName, userBloodType }: BloodIn
         <div className="space-y-3">
           {displayed.map((item) => (
             <div key={item.id || item.blood_type} className="flex items-center gap-2">
-              <span className="w-8 shrink-0 text-sm font-bold text-black md:w-10">{item.blood_type}</span>
-              <div className="flex-1 h-2 rounded-full bg-gray-100 min-w-0">
+              <span className="w-8 shrink-0 text-sm font-bold text-black md:w-10 dark:text-gray-100">{item.blood_type}</span>
+              <div className="flex-1 h-2 rounded-full bg-gray-100 min-w-0 dark:bg-gray-700">
                 <div
                   className={cn("h-full rounded-full transition-all", barColor(item.status))}
                   style={{ width: `${Math.max(2, item.capacity_pct ?? 0)}%` }}
                 />
               </div>
               <div className="flex items-center gap-1 md:gap-2 shrink-0">
-                <span className="w-12 md:w-16 text-right text-xs md:text-sm text-gray-600">{item.units}</span>
+                <span className="w-12 md:w-16 text-right text-xs md:text-sm text-gray-600 dark:text-gray-400">{item.units}</span>
                 <Badge
                   variant={
                     item.status === "critical"

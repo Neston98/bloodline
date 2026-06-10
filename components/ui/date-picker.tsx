@@ -83,17 +83,18 @@ export function DatePicker({ value, onChange, minDate, direction = "down", align
         className={inputCls}
       />
       {open && (
-        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", [align === "right" ? "right" : "left"]: 0, zIndex: 50, width: cw, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }} className="rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+        <div style={{ position: "absolute", [direction === "up" ? "bottom" : "top"]: "100%", [align === "right" ? "right" : "left"]: 0, zIndex: 50, width: cw, marginBottom: direction === "up" ? "8px" : undefined, marginTop: direction === "down" ? "8px" : undefined }}
+          className="rounded-xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-2 flex items-center justify-between px-1">
             <button type="button" onClick={() => { if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) } else setViewMonth(m => m - 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">&#x25C0;</button>
-            <span className="text-sm font-semibold text-black">{months[viewMonth]} {viewYear}</span>
+              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors text-xs">&#x25C0;</button>
+            <span className="text-sm font-semibold text-black dark:text-gray-100">{months[viewMonth]} {viewYear}</span>
             <button type="button" onClick={() => { if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) } else setViewMonth(m => m + 1) }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-xs">&#x25B6;</button>
+              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors text-xs">&#x25B6;</button>
           </div>
           <div className="flex mb-1" style={{ width: cw - 24 }}>
             {days.map(d => (
-              <div key={d} className="flex-1 text-center text-xs font-semibold text-gray-500">{d}</div>
+              <div key={d} className="flex-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">{d}</div>
             ))}
           </div>
           <div ref={gridRef} style={{ display: "flex", flexWrap: "wrap", width: cw - 24 }}>
@@ -110,16 +111,18 @@ export function DatePicker({ value, onChange, minDate, direction = "down", align
               if (disabled) {
                 return (
                   <div key={day} style={{ width: (cw - 24) / 7, height: CELL, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", opacity: 0.25 }}
-                    className="text-gray-400">
+                    className="text-gray-400 dark:text-gray-500">
                     {day}
                   </div>
                 )
               }
 
-              let bg = "#fff"
+              let bg = "transparent"
               if (isSel) bg = "#dc2626"
               else if (highlighted) bg = "#fef9c3"
               else if (isToday) bg = "#fef2f2"
+
+              const darkBg = isSel ? "#dc2626" : isToday ? "#1c1a20" : "transparent"
 
               return (
                 <button key={day} type="button" onClick={() => pick(day)}

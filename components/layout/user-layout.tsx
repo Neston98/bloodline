@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { LayoutDashboard, User, Calendar, Gift, LogOut, Droplets, Menu, X } from "lucide-react"
+import { LayoutDashboard, User, Calendar, Gift, LogOut, Droplets, Menu, X, Sun, Moon } from "lucide-react"
 import { cn } from "@/utils/cn"
 import { getDisplayTier } from "@/utils/formatters"
 import type { Profile } from "@/types"
@@ -28,6 +28,39 @@ function useIsMobile() {
   }, [])
 
   return isMobile
+}
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"))
+  }, [])
+
+  function toggle() {
+    const next = !dark
+    setDark(next)
+    if (next) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+    try {
+      localStorage.setItem("bloodline-theme", next ? "dark" : "light")
+    } catch {}
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {dark ? "Light Mode" : "Dark Mode"}
+    </button>
+  )
 }
 
 export default function UserLayout({
@@ -71,6 +104,9 @@ export default function UserLayout({
           </Link>
         ))}
       </nav>
+      <div className="border-t border-gray-800 px-3 py-2">
+        <ThemeToggle />
+      </div>
       <div className="border-t border-gray-800 px-6 py-4">
         <div className="mb-3 flex items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
@@ -100,23 +136,37 @@ export default function UserLayout({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {isMobile && (
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
             <div className="flex items-center gap-2">
               <Droplets className="h-5 w-5 text-red-500" />
-              <span className="text-base font-bold text-black">BloodLine</span>
+              <span className="text-base font-bold text-black dark:text-white">BloodLine</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 transition-colors"
-              aria-label="Open menu"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const isDark = document.documentElement.classList.toggle("dark")
+                  try { localStorage.setItem("bloodline-theme", isDark ? "dark" : "light") } catch {}
+                }}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Toggle dark mode"
+              >
+                <Sun className="h-5 w-5 hidden dark:block" />
+                <Moon className="h-5 w-5 block dark:hidden" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+            </div>
           </header>
         )}
 
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-charcoal">
           <div className="p-4 md:p-8">{children}</div>
         </main>
       </div>
@@ -167,6 +217,9 @@ export default function UserLayout({
                   {item.label}
                 </Link>
               ))}
+              <div className="border-t border-gray-700 pt-3 mt-3">
+                <ThemeToggle />
+              </div>
             </nav>
 
             <div className="border-t border-gray-800 px-5 py-4">

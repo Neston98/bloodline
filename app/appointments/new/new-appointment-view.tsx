@@ -164,13 +164,13 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+          className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
-        <h1 className="text-2xl font-bold text-black">Schedule New Appointment</h1>
-        <p className="mt-1 text-sm text-gray-900">Book your next blood donation slot</p>
+        <h1 className="text-2xl font-bold text-black dark:text-gray-100">Schedule New Appointment</h1>
+        <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">Book your next blood donation slot</p>
       </div>
 
       {criticalCentres.length > 0 && <AlertBanner bloodType={profile.blood_type} centres={criticalCentres} className="mb-6" showScheduleButton={false} />}
@@ -180,15 +180,15 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
           <div key={s} className="flex items-center gap-2">
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                step >= s ? "bg-red-600 text-white" : "bg-gray-100 text-gray-600"
+                step >= s ? "bg-red-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
               }`}
             >
               {s}
             </div>
-            <span className={`text-sm ${step >= s ? "text-black font-medium" : "text-gray-600"}`}>
+            <span className={`text-sm ${step >= s ? "text-black dark:text-gray-100 font-medium" : "text-gray-600 dark:text-gray-400"}`}>
               {s === 1 ? "Centre" : s === 2 ? "Date & Time" : "Confirm"}
             </span>
-            {s < 3 && <div className="mx-2 h-px w-8 bg-gray-200" />}
+            {s < 3 && <div className="mx-2 h-px w-8 bg-gray-200 dark:bg-gray-700" />}
           </div>
         ))}
       </div>
@@ -197,16 +197,16 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12">
             <CheckCircle2 className="h-12 w-12 text-green-500" />
-            <h2 className="text-xl font-bold text-black">Appointment Confirmed!</h2>
-            <p className="text-sm text-gray-900">
+            <h2 className="text-xl font-bold text-black dark:text-gray-100">Appointment Confirmed!</h2>
+            <p className="text-sm text-gray-900 dark:text-gray-300">
               {centre?.name} on {selectedDate} at {selectedTime}
             </p>
             {isFastPass && (
-              <p className="text-sm font-medium text-amber-700">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
                 Fast-Pass issued! Check your email for the QR code.
               </p>
             )}
-            <p className="text-xs text-gray-600">Redirecting to appointments...</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Redirecting to appointments...</p>
           </CardContent>
         </Card>
       ) : (
@@ -225,13 +225,13 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
                     onClick={() => setSelectedCentre(c.id)}
                     className={`w-full rounded-lg border p-4 text-left transition-colors ${
                       selectedCentre === c.id
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-red-500 bg-red-50 dark:border-red-500 dark:bg-red-900/20"
+                        : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                     }`}
                   >
-                    <p className="font-medium text-black">{c.name}</p>
-                    <p className="mt-1 text-sm text-gray-900">{c.address}</p>
-                    <p className="text-xs text-gray-600">{c.opening_hours}</p>
+                    <p className="font-medium text-black dark:text-gray-100">{c.name}</p>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">{c.address}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{c.opening_hours}</p>
                   </button>
                 ))}
                 <div className="flex justify-end pt-4">
@@ -246,7 +246,7 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-900">Date</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">Date</label>
                   <DatePicker
                     value={selectedDate}
                     onChange={setSelectedDate}
@@ -254,16 +254,16 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
                     direction="down"
                     highlightDates={fastPassWindow}
                     placeholder="Select donation date"
-                    inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    inputCls="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                   />
                   {isDeferred && (
-                    <p className="mt-1 text-xs text-red-600">
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                       You are deferred from donating until {liveNextEligible}. Please select a date on or after this date.
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">Available Time Slots</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-gray-300">Available Time Slots</label>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {TIME_SLOTS.map((slot) => (
                       <button
@@ -272,15 +272,15 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
                         disabled={!slot.available}
                         className={`rounded-lg border p-3 text-sm transition-colors ${
                           !slot.available
-                            ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-500"
+                            ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
                             : selectedTime === slot.label
-                              ? "border-red-500 bg-red-50 text-red-700"
-                              : "border-gray-200 text-gray-700 hover:border-gray-300"
+                              ? "border-red-500 bg-red-50 text-red-700 dark:border-red-500 dark:bg-red-900/20 dark:text-red-300"
+                              : "border-gray-200 text-gray-700 hover:border-gray-300 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600"
                         }`}
                       >
                         {slot.label}
                         {!slot.available && (
-                          <span className="mt-1 block text-xs text-gray-500">Full</span>
+                          <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">Full</span>
                         )}
                       </button>
                     ))}
@@ -307,42 +307,42 @@ export function NewAppointmentView({ profile, centres, inventory }: { profile: P
 
             {step === 3 && centre && (
               <div className="space-y-6">
-                <div className="rounded-lg border bg-gray-50 p-4 space-y-3">
+                <div className="rounded-lg border bg-gray-50 p-4 space-y-3 dark:border-gray-700 dark:bg-gray-800/50">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Blood Centre</span>
-                    <span className="text-sm font-medium text-black">{centre.name}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-300">Blood Centre</span>
+                    <span className="text-sm font-medium text-black dark:text-gray-100">{centre.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Address</span>
-                    <span className="text-sm font-medium text-black">{centre.address}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-300">Address</span>
+                    <span className="text-sm font-medium text-black dark:text-gray-100">{centre.address}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Date</span>
-                    <span className="text-sm font-medium text-black">{selectedDate}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-300">Date</span>
+                    <span className="text-sm font-medium text-black dark:text-gray-100">{selectedDate}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Time</span>
-                    <span className="text-sm font-medium text-black">{selectedTime}</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-300">Time</span>
+                    <span className="text-sm font-medium text-black dark:text-gray-100">{selectedTime}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-900">Blood Type</span>
+                    <span className="text-sm text-gray-900 dark:text-gray-300">Blood Type</span>
                     <Badge>{profile.blood_type}</Badge>
                   </div>
                 </div>
                 {fastPassEligible && (
-                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                     <Zap className="h-4 w-4" />
                     Fast-Pass eligible — you'll skip the queue at this centre!
                   </div>
                 )}
-                <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer">
+                <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 cursor-pointer dark:border-gray-700 dark:bg-gray-800">
                   <input
                     type="checkbox"
                     checked={travelConfirmed}
                     onChange={(e) => setTravelConfirmed(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 dark:border-gray-600"
                   />
-                  <span className="text-sm text-gray-900 leading-relaxed">
+                  <span className="text-sm text-gray-900 dark:text-gray-300 leading-relaxed">
                     I confirm that I have not travelled outside of Singapore in the last 14 days
                   </span>
                 </label>

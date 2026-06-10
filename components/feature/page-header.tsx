@@ -6,8 +6,8 @@ interface PageHeaderProps {
 export function PageHeader({ greeting, date }: PageHeaderProps) {
   return (
     <div className="mb-8">
-      <h1 className="text-2xl font-bold text-black">{greeting}</h1>
-      <p className="mt-1 text-sm text-gray-900">{date}</p>
+      <h1 className="text-2xl font-bold text-black dark:text-gray-100">{greeting}</h1>
+      <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">{date}</p>
     </div>
   )
 }

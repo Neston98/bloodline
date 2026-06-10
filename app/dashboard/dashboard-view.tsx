@@ -92,7 +92,7 @@ export function DashboardView({
       <div className="relative flex items-start justify-between">
         <PageHeader greeting={`${getGreeting()}, ${profile.full_name.split(" ")[0]}`} date={formatToday()} />
         <button type="button" onClick={() => { setShowRefreshed(true); router.refresh(); setTimeout(() => setShowRefreshed(false), 3000) }}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-colors"
           title="Refresh dashboard">
           <RefreshCw className="h-4 w-4" />
         </button>
@@ -115,11 +115,11 @@ export function DashboardView({
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-black">Blood Supply</h3>
+            <h3 className="text-lg font-semibold text-black dark:text-gray-100">Blood Supply</h3>
             <select
               value={selectedCentreId}
               onChange={(e) => setSelectedCentreId(e.target.value)}
-              className="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              className="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-black focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
             >
               {centres.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -130,7 +130,7 @@ export function DashboardView({
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-black">Upcoming Appointments</h3>
+          <h3 className="text-lg font-semibold text-black dark:text-gray-100">Upcoming Appointments</h3>
           {upcomingAppointments.length > 0 ? (
             <div className="space-y-3">
               {upcomingAppointments.map((apt) => (
@@ -138,12 +138,12 @@ export function DashboardView({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-900">No upcoming appointments.</p>
+            <p className="text-sm text-gray-900 dark:text-gray-300">No upcoming appointments.</p>
           )}
 
           {pastAppointments.length > 0 && (
             <>
-              <h3 className="text-lg font-semibold text-black pt-2">Past Appointments</h3>
+              <h3 className="text-lg font-semibold text-black dark:text-gray-100 pt-2">Past Appointments</h3>
               <div className="space-y-3">
                 {pastAppointments.slice(0, 2).map((apt) => (
                 <AppointmentCard key={apt.id} appointment={apt} />
@@ -151,7 +151,7 @@ export function DashboardView({
                 <button
                   type="button"
                   onClick={() => router.push("/appointments")}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
                 >
                   See more
                 </button>

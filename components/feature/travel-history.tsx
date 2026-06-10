@@ -283,7 +283,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
   const supabase = createClient()
   const router = useRouter()
 
-  const INP_CLS = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+  const INP_CLS = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-black h-10 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
@@ -451,11 +451,11 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
       <CardContent className="overflow-visible">
         <div className="space-y-3">
           {records.length === 0 && !adding && (
-            <p className="text-sm text-gray-500">No travel history recorded yet.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No travel history recorded yet.</p>
           )}
 
           {adding && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <DatePicker value={form.return_date} onChange={(v) => setForm({ ...form, return_date: v })} inputCls={INP_CLS} />
                 <CountrySelect value={form.country} onChange={(v) => setForm({ ...form, country: v, city: "" })} />
@@ -467,7 +467,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
                 />
               </div>
               {form.country && form.return_date && (
-                <p className="mt-2 text-xs text-gray-600">{clearanceNote(form.country, form.return_date)}</p>
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">{clearanceNote(form.country, form.return_date)}</p>
               )}
               <div className="mt-2 flex justify-end gap-2">
                 <Button size="sm" variant="outline" onClick={cancelEdit}>
@@ -482,12 +482,12 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
 
           {records.map((record) =>
             editingId === record.id ? (
-              <div key={record.id} className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <div key={record.id} className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-lg">
                     {countryFlag(record.country)}
                   </div>
-                  <span className="text-sm font-medium text-black">{record.city ? `${record.city}, ` : ""}{record.country}</span>
+                  <span className="text-sm font-medium text-black dark:text-gray-100">{record.city ? `${record.city}, ` : ""}{record.country}</span>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <DatePicker value={form.return_date} onChange={(v) => setForm({ ...form, return_date: v })} inputCls={INP_CLS} />
@@ -511,26 +511,26 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
             ) : (
               <div
                 key={record.id}
-                className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${selectedIds.has(record.id) ? "border-red-300 bg-red-50" : ""}`}
+                className={`flex items-center justify-between rounded-lg border border-gray-100 p-3 transition-colors dark:border-gray-700 ${selectedIds.has(record.id) ? "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20" : ""}`}
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <button
                     onClick={() => toggleSelect(record.id)}
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${selectedIds.has(record.id) ? "border-red-600 bg-red-600 text-white" : "border-gray-300 bg-white"}`}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors dark:border-gray-600 ${selectedIds.has(record.id) ? "border-red-600 bg-red-600 text-white" : "border-gray-300 bg-white dark:bg-gray-700"}`}
                   >
                     {selectedIds.has(record.id) && <Check className="h-3 w-3" />}
                   </button>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-lg">
                     {countryFlag(record.country)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-black">
+                    <p className="truncate text-sm font-medium text-black dark:text-gray-100">
                       {record.city ? `${record.city}, ` : ""}{record.country}
                     </p>
-                    <p className="text-xs text-gray-900">
+                    <p className="text-xs text-gray-900 dark:text-gray-300">
                       Returned {formatDate(record.return_date)}
                       {new Date(record.cleared_date || record.return_date) > new Date() && (
-                        <span className="ml-1 text-amber-600">· deferring until {formatDate(record.cleared_date)}</span>
+                        <span className="ml-1 text-amber-600 dark:text-amber-400">· deferring until {formatDate(record.cleared_date)}</span>
                       )}
                     </p>
                   </div>
@@ -545,7 +545,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
                     {record.status}
                   </Badge>
                   <Button size="sm" variant="ghost" onClick={() => startEdit(record)}>
-                    <Pencil className="h-3.5 w-3.5 text-gray-600" />
+                    <Pencil className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => handleDelete(record.id)}>
                     <Trash2 className="h-3.5 w-3.5 text-red-600" />
@@ -556,7 +556,7 @@ export function TravelHistory({ records: initialRecords, donorId }: TravelHistor
           )}
 
           {cancelledMsg && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
               <span className="font-medium">✕ {cancelledMsg}</span>
             </div>
           )}

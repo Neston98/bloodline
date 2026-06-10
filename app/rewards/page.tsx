@@ -143,8 +143,8 @@ export default async function RewardsPage() {
   return (
     <UserLayout currentPath="/rewards" profile={profile}>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-black">Rewards & Loyalty</h1>
-        <p className="mt-1 text-sm text-gray-900">Track your progress, earn points, and redeem rewards</p>
+        <h1 className="text-2xl font-bold text-black dark:text-gray-100">Rewards & Loyalty</h1>
+        <p className="mt-1 text-sm text-gray-900 dark:text-gray-300">Track your progress, earn points, and redeem rewards</p>
       </div>
 
       <Card className="mb-8 overflow-hidden">
@@ -165,57 +165,57 @@ export default async function RewardsPage() {
         </div>
         <CardContent className="p-6">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="text-gray-900">
+            <span className="text-gray-900 dark:text-gray-300">
               {nextTier ? `${ptsToNext} points to ${nextTier}` : "Maximum tier reached!"}
             </span>
-            <span className="font-medium text-black">{Math.round(progressPct)}%</span>
+            <span className="font-medium text-black dark:text-gray-100">{Math.round(progressPct)}%</span>
           </div>
           <Progress value={progressPct} indicatorClassName={tierIndicator} />
         </CardContent>
       </Card>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
               <Droplets className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-900">Donations</p>
-              <p className="text-lg font-bold text-black">{profile.donations_count}</p>
+              <p className="text-xs text-gray-900 dark:text-gray-300">Donations</p>
+              <p className="text-lg font-bold text-black dark:text-gray-100">{profile.donations_count}</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               <Gift className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-900">Points per Visit</p>
-              <p className="text-lg font-bold text-black">200</p>
+              <p className="text-xs text-gray-900 dark:text-gray-300">Points per Visit</p>
+              <p className="text-lg font-bold text-black dark:text-gray-100">200</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
               <Star className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-900">Current Tier</p>
-              <p className="text-lg font-bold text-black">{tier}</p>
+              <p className="text-xs text-gray-900 dark:text-gray-300">Current Tier</p>
+              <p className="text-lg font-bold text-black dark:text-gray-100">{tier}</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-900">Progress</p>
-              <p className="text-lg font-bold text-black">{Math.round(progressPct)}%</p>
+              <p className="text-xs text-gray-900 dark:text-gray-300">Progress</p>
+              <p className="text-lg font-bold text-black dark:text-gray-100">{Math.round(progressPct)}%</p>
             </div>
           </div>
         </div>

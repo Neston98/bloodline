@@ -22,8 +22,8 @@ function AdminLayout({ currentPath, centreName, centreId, children }: AdminLayou
   const makeHref = (href: string) => centreId ? `${href}?centre_id=${encodeURIComponent(centreId)}` : href
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0a0a0a]">
-      <aside className="flex h-full w-16 flex-col border-r border-white/5 bg-[#1f1f24] md:w-64">
+    <div className="flex h-screen overflow-hidden bg-charcoal">
+      <aside className="flex h-full w-16 flex-col border-r border-white/5 bg-charcoal-100 md:w-64">
         <div className="flex items-center justify-center gap-2.5 border-b border-white/5 px-4 py-5 md:px-6 md:justify-start">
           <Droplets className="h-6 w-6 shrink-0 text-red-500" />
           <span className="hidden text-lg font-bold text-white md:block">BloodLine</span>
