@@ -56,18 +56,16 @@ export function BloodInventory({ inventory, centreName, userBloodType }: BloodIn
       <CardContent>
         <div className="space-y-3">
           {displayed.map((item) => (
-            <div key={item.id || item.blood_type} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="w-10 shrink-0 text-sm font-bold text-black">{item.blood_type}</span>
-                <div className="h-2 w-52 rounded-full bg-gray-100">
-                  <div
-                    className={cn("h-full rounded-full transition-all", barColor(item.status))}
-                    style={{ width: `${Math.max(2, item.capacity_pct ?? 0)}%` }}
-                  />
-                </div>
+            <div key={item.id || item.blood_type} className="flex items-center gap-2">
+              <span className="w-8 shrink-0 text-sm font-bold text-black md:w-10">{item.blood_type}</span>
+              <div className="flex-1 h-2 rounded-full bg-gray-100 min-w-0">
+                <div
+                  className={cn("h-full rounded-full transition-all", barColor(item.status))}
+                  style={{ width: `${Math.max(2, item.capacity_pct ?? 0)}%` }}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-16 text-right text-sm text-gray-600 shrink-0">{item.units} units</span>
+              <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                <span className="w-12 md:w-16 text-right text-xs md:text-sm text-gray-600">{item.units}</span>
                 <Badge
                   variant={
                     item.status === "critical"
@@ -76,7 +74,7 @@ export function BloodInventory({ inventory, centreName, userBloodType }: BloodIn
                         ? "warning"
                         : "success"
                   }
-                  className="w-16 justify-center shrink-0"
+                  className="w-14 md:w-16 justify-center text-[10px] md:text-xs"
                 >
                   {item.status}
                 </Badge>
