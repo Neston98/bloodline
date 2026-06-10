@@ -86,15 +86,15 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
   const [mounted, setMounted] = useState(false)
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
   const [redemptions, setRedemptions] = useState<Redemption[]>([])
-  const [mockPoints, setMockPoints] = useState<number>(userPoints)
+  const [localSpent, setLocalSpent] = useState<number>(0)
   const [toast, setToast] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   useEffect(() => {
     const savedRedeem = localStorage.getItem("voucher-redemptions")
     if (savedRedeem) setRedemptions(JSON.parse(savedRedeem))
-    const savedPoints = localStorage.getItem("voucher-mock-points")
-    if (savedPoints) setMockPoints(parseInt(savedPoints, 10))
+    const savedSpent = localStorage.getItem("voucher-local-spent")
+    if (savedSpent) setLocalSpent(parseInt(savedSpent, 10))
     setMounted(true)
   }, [])
 
@@ -108,13 +108,13 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
 
   useEffect(() => {
     if (hasMountedRef.current) {
-      localStorage.setItem("voucher-mock-points", String(mockPoints))
+      localStorage.setItem("voucher-local-spent", String(localSpent))
     } else {
       hasMountedRef.current = true
     }
-  }, [mockPoints])
+  }, [localSpent])
 
-  const effectivePoints = mounted ? mockPoints : userPoints
+  const effectivePoints = mounted ? userPoints - localSpent : userPoints
 
   async function handleRedeem(voucher: Voucher) {
     setRedeemingId(voucher.id)
@@ -175,7 +175,7 @@ export function VoucherList({ vouchers, userPoints }: VoucherListProps) {
       // Supabase unavailable — use mock fallback
     }
 
-    setMockPoints((p) => p - voucher.points_cost)
+    setLocalSpent((p) => p + voucher.points_cost)
 
     const code = generateCode(prefix)
     const redemption: Redemption = {
