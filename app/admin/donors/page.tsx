@@ -47,6 +47,8 @@ export default async function AdminDonorsPage({
     let query = supabase
       .from("appointments")
       .select("id, appointment_date, time_start, time_end, blood_type, status, admin_approved, travel_declaration, donor_id, profiles!inner(full_name, initials, mobile, email, id)")
+      .eq("centre_id", centreId)
+      .in("status", ["scheduled", "fast_pass"])
       .order("time_start", { ascending: true })
 
     if (dateFrom === dateTo) {
